@@ -1,0 +1,4 @@
+kivymd
+pyttsx3
+SpeechRecognition
+opencv-python

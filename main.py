@@ -8,7 +8,7 @@ from kivy.lang import Builder
 from kivy.uix.screenmanager import ScreenManager, Screen
 from kivy.uix.image import Image
 from kivy.clock import Clock
-from kivy.uix.screenmanager import NoTransition
+from kivy.uix.screenmanager import NoTransition, SlideTransition
 from kivy.graphics.texture import Texture
 
 ##/ TTS IMPORTS /##
@@ -86,14 +86,19 @@ WindowManager:
     MDScreen:
         orientation: 'vertical'
         MDLabel:
-            text: 'Camera'
+            text: 'Camera Page'
             font_style: 'H4'
-            halign: 'center'
+            pos_hint: {"center_x": 0.5, "center_y": 0.9}
         MDFlatButton:
             text: 'Stop Camera'
-            pos_hint: {"center_x": 0.5, "center_y": 0.1}
+            pos_hint: {"center_x": 0.3, "center_y": 0.1}
             md_bg_color: app.theme_cls.primary_light
             on_press: app.stopcam()
+        MDFlatButton:
+            text: 'Save Image'
+            pos_hint: {"center_x": 0.7, "center_y": 0.1}
+            md_bg_color: app.theme_cls.primary_light
+            on_press: app.saveImage()
         MDBoxLayout:
             id: layout
             orientation: 'vertical'
@@ -140,6 +145,9 @@ class MainApp(MDApp):
     def prestartcam(self):
         self.root.transition = NoTransition()
         self.root.current = 'camera'
+        if self.oncam == True:
+            self.oncam = False
+            self.stopcam()
         self.startcam()
         if self.oncam == False:
             self.oncam = True
@@ -152,20 +160,27 @@ class MainApp(MDApp):
         Clock.schedule_interval(self.loadVideo, 1.0/30.0) #load camera view at 30 frames per second
         self.root.get_screen('camera').ids.layout.add_widget(self.image) #add image view to camera page
         self.oncam = True
-        print('got here')
+
+    def saveImage(self):
+        cv2.imwrite("image.png", self.image_frame)
 
     def loadVideo(self, dt):
         ret, frame = self.capture.read()
-        cv2.imshow("CV2 Image", frame)
+        
+        self.image_frame = frame
+
         buf1 = cv2.flip(frame, 0)
         buf = buf1.tobytes()
         texture1 = Texture.create(size=(frame.shape[1], frame.shape[0]), colorfmt='bgr') 
-        #if working on RASPBERRY PI, use colorfmt='rgba' here instead, but stick with "bgr" in blit_buffer.
         texture1.blit_buffer(buf, colorfmt='bgr', bufferfmt='ubyte')
-        # display image from the texture
         self.image.texture = texture1
 
-
+    def stopcam(self):
+        self.oncam = False
+        self.capture.release()
+        cv2.destroyAllWindows()
+        self.root.transition = SlideTransition(direction="left")
+        self.root.current = 'camerainit'
 
     def textToSpeech(self, text):
         engine.say(text)

@@ -51,19 +51,34 @@ WindowManager:
     name: 'settings'
     MDScreen:
         orientation: 'vertical'
+        MDFillRoundFlatIconButton:
+            icon: "back"
+            text: "Back"
+            pos_hint: {"center_x": 0.1, "center_y": 0.9}
+            font_style: 'Caption'
+            text_color: 1, 1, 1, 1
+            border_color: 0, 0, 0, 0
+        MDLabel:
+            text: "Settings"
+            pos_hint: {"center_x": 0.5, "center_y": 0.9}
+            font_style: 'H5'
+            halign: 'center'
         MDLabel:
             id: MyCoolID
-            text: "Please select a setting"
-            font_style: 'H6'
+            text: "Choose your preferred mode!"
+            pos_hint: {"center_x": 0.5, "center_y": 0.7}
+            font_style: 'H4'
             halign: 'center'
         MDFlatButton:
             text: 'Sound Map'
             pos_hint: {"center_x": 0.3, "center_y": 0.3}
+            size_hint: 0.35, 0.45
             md_bg_color: app.theme_cls.primary_light
             on_press: app.changeText("Sound")
         MDFlatButton:
             text: 'Audible Reminders'
             pos_hint: {"center_x": 0.7, "center_y": 0.3}
+            size_hint: 0.35, 0.45
             md_bg_color: app.theme_cls.primary_light
             on_press: app.changeText("Audible")
 

@@ -1,8 +1,8 @@
 from MainApp.run import launchApp
-from MainApp.utils.dependencies import downloadDependencies
+from MainApp.utils.dependencies import download_dependencies
 
 # download requirments, models and dependencies here
-# downloadDependencies()
+# download_dependencies()
 
 
 # launch the app

@@ -9,6 +9,8 @@
 
 ## Requirements
 
+`Install protobuf-compiler for Ubuntu and protobuf for macOS first!!`
+
 ```py
 pip install -r requirements.txt
 ```

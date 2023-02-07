@@ -33,63 +33,69 @@ WindowManager:
     SettingsScreen:
     CameraInitScreen:
     CameraScreen:
-
-
 <HomeScreen>:
     name: 'home'
     MDScreen:
         orientation: 'vertical'
         MDLabel:
             text: 'Welcome to Our App!'
-            font_style: 'H4'
+            font_style: 'H4' 
             halign: 'center'
         MDTextButton:
             text: 'Settings'
-            pos_hint: {"center_x": 0.5}
-            on_release: root.manager.current = 'settings'
-
-        MDTextButton:
-            text: 'Exit'
-            pos_hint: {"center_x": 0.3}
-
+            font_style: 'Subtitle1' 
+            pos_hint: {"center_x": 0.5, "center_y": 0.1}
+            on_press: root.manager.current = 'settings'
 <SettingsScreen>:
     name: 'settings'
     MDScreen:
         orientation: 'vertical'
+        MDFillRoundFlatIconButton:
+            icon: 'chevron_left'
+            text: "Back"
+            pos_hint: {"center_x": 0.1, "center_y": 0.95}
+            font_style: 'Caption'
+            text_color: 1, 1, 1, 1
+            background_color: 0, 0, 0, 0
+        MDLabel:
+            text: "Settings"
+            pos_hint: {"center_x": 0.5, "center_y": 0.95}
+            font_style: 'H5'
+            halign: 'center'
         MDLabel:
             id: MyCoolID
-            text: "Please select a setting"
-            font_style: 'H6'
+            text: "Choose your preferred mode!"
+            pos_hint: {"center_x": 0.5, "center_y": 0.8}
+            font_style: 'H4'
             halign: 'center'
         MDFlatButton:
             text: 'Sound Map'
-            pos_hint: {"center_x": 0.3, "center_y": 0.3}
+            pos_hint: {"center_x": 0.275, "center_y": 0.45}
+            size_hint: 0.425, 0.525
             md_bg_color: app.theme_cls.primary_light
-            on_release: app.changeText("Sound")
+            on_press: app.changeText("Sound Map.")
         MDFlatButton:
             text: 'Audible Reminders'
-            pos_hint: {"center_x": 0.7, "center_y": 0.3}
+            pos_hint: {"center_x": 0.725, "center_y": 0.45}
+            size_hint: 0.425, 0.525
             md_bg_color: app.theme_cls.primary_light
-            on_release: app.changeText("Audible")
-
+            on_press: app.changeText("Audible Reminders.")
 <CameraInitScreen>:
     name: 'camerainit'
     MDScreen:
         orientation: 'vertical'
         MDLabel:
-            text: 'Are you ready to start the camera?'
+            text: 'Camera'
             font_style: 'H4'
             halign: 'center'
         MDFlatButton:
-            text: 'Start Camera NOW!'
+            text: 'Start Camera'
             pos_hint: {"center_x": 0.5, "center_y": 0.3}
             md_bg_color: app.theme_cls.primary_light
-            on_release: app.prestartcam()
-
+            on_press: app.prestartcam()
 <CameraScreen>:
     name: 'camera'
     MDScreen:
-        id : camera
         orientation: 'vertical'
         MDLabel:
             text: 'Camera Page'
@@ -99,18 +105,17 @@ WindowManager:
             text: 'Stop Camera'
             pos_hint: {"center_x": 0.3, "center_y": 0.1}
             md_bg_color: app.theme_cls.primary_light
-            on_release: app.stopcam(status="camerastop")
+            on_press: app.stopcam()
         MDFlatButton:
             text: 'Save Image'
             pos_hint: {"center_x": 0.7, "center_y": 0.1}
             md_bg_color: app.theme_cls.primary_light
-            on_release: app.saveImage()
+            on_press: app.saveImage()
         MDBoxLayout:
             id: layout
             orientation: 'vertical'
             size_hint_y: None
             height: self.minimum_height
-
 '''
 
 # Class's written by Daksh
@@ -175,17 +180,15 @@ class MainApp(MDApp):
             return True
     
     def changeText(self, word):
-        text = self.root.get_screen("settings").ids.MyCoolID.text
+        text = self.root.get_screen("settings").ids.MyCoolID.text 
         if text == "You selected " + word:
             self.root.current = 'camerainit'
         else:
-            self.root.get_screen(
-                "settings").ids.MyCoolID.text = "You selected " + word
+            self.root.get_screen("settings").ids.MyCoolID.text = "You selected " + word
     
     def prestartcam(self):
         self.image = Image()  # create image here as startcam is in another thread
-        self.root.get_screen('camera').ids.camera.add_widget(
-            self.image)
+        self.root.get_screen('camera').ids.layout.add_widget(self.image)
         self.root.transition = NoTransition()
         self.root.current = 'camera'
         self.oncam = True

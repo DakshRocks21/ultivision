@@ -11,13 +11,15 @@ from kivy.clock import Clock
 from kivy.uix.screenmanager import NoTransition, SlideTransition
 from kivy.graphics.texture import Texture
 from kivy.base import EventLoop
+from kivymd.icon_definitions import md_icons
+from kivymd.uix.dialog import MDDialog
 
 ## / TTS IMPORTS /##
 import pyttsx3
 import speech_recognition as sr
 
 ##/ UTILS IMPORTS /##
-from MainApp.utils.config import load_config
+from MainApp.utils.config import load_config, create_config
 
 ## / OTHER IMPORTS /##
 import cv2
@@ -34,7 +36,6 @@ KIVY_CONFIG = '''
 WindowManager:
     HomeScreen:
     SettingsScreen:
-    CameraInitScreen:
     CameraScreen:
 <HomeScreen>:
     name: 'home'
@@ -44,11 +45,12 @@ WindowManager:
             text: 'Welcome to Our App!'
             font_style: 'H4' 
             halign: 'center'
-        MDTextButton:
-            text: 'Settings'
+        MDFlatButton:
+            text: 'Start'
+            md_bg_color: app.theme_cls.primary_light
             font_style: 'Subtitle1' 
             pos_hint: {"center_x": 0.5, "center_y": 0.1}
-            on_press: root.manager.current = 'settings'
+            on_press: app.startcam()
 <SettingsScreen>:
     name: 'settings'
     MDScreen:
@@ -60,6 +62,7 @@ WindowManager:
             font_style: 'Caption'
             text_color: 1, 1, 1, 1
             background_color: 0, 0, 0, 0
+            on_press: app.root.current = 'camera'
         MDLabel:
             text: "Settings"
             pos_hint: {"center_x": 0.5, "center_y": 0.95}
@@ -83,19 +86,6 @@ WindowManager:
             size_hint: 0.425, 0.525
             md_bg_color: app.theme_cls.primary_light
             on_press: app.changeText("Audible Reminders.")
-<CameraInitScreen>:
-    name: 'camerainit'
-    MDScreen:
-        orientation: 'vertical'
-        MDLabel:
-            text: 'Camera'
-            font_style: 'H4'
-            halign: 'center'
-        MDFlatButton:
-            text: 'Start Camera'
-            pos_hint: {"center_x": 0.5, "center_y": 0.3}
-            md_bg_color: app.theme_cls.primary_light
-            on_press: app.startcam()
 <CameraScreen>:
     name: 'camera'
     MDScreen:
@@ -107,15 +97,15 @@ WindowManager:
         BoxLayout:
             id: layout
         MDFlatButton:
-            text: 'Stop Camera'
+            text: 'Settings'
             pos_hint: {"center_x": 0.3, "center_y": 0.1}
             md_bg_color: app.theme_cls.primary_light
-            on_press: app.stopcam()
+            on_press: app.open_settings()
         MDFlatButton:
-            text: 'Save Image'
+            text: 'Exit'
             pos_hint: {"center_x": 0.7, "center_y": 0.1}
             md_bg_color: app.theme_cls.primary_light
-            on_press: app.saveImage()
+            on_press: app.stopcam()
         
 '''
 
@@ -127,10 +117,6 @@ class HomeScreen(Screen):
 
 
 class SettingsScreen(Screen):
-    pass
-
-
-class CameraInitScreen(Screen):
     pass
 
 
@@ -149,7 +135,7 @@ class MainApp(MDApp):
 
     def build(self):
         self.config = load_config()
-
+        self.dialog = None
         self.engine = pyttsx3.init()
         self.engine.setProperty('rate', self.config['tts']['rate'])
         self.engine.setProperty('volume', self.config['tts']['volume'])
@@ -172,7 +158,8 @@ class MainApp(MDApp):
     def changeText(self, word):
         text = self.root.get_screen("settings").ids.MyCoolID.text 
         if text == "You selected " + word:
-            self.root.current = 'camerainit'
+            self.root.transition = SlideTransition(direction="right")
+            self.root.current = 'camera'
         else:
             self.root.get_screen("settings").ids.MyCoolID.text = "You selected " + word
 
@@ -182,22 +169,16 @@ class MainApp(MDApp):
         self.engine.stop()
         self.engine.runAndWait()
 
-
     def startcam(self):
         self.image = Image()  # create image here as startcam is in another thread
         self.root.get_screen('camera').ids.layout.add_widget(self.image)
-        self.root.transition = NoTransition()
+        self.root.transition = SlideTransition(direction="left")
         self.root.current = 'camera'
         self.oncam = True
-        print("cam started")
         self.capture = cv2.VideoCapture(
             int(self.CAMERA))  # select camera input
         # load camera view at 30 frames per second
         Clock.schedule_interval(self.loadVideo, 1.0/30.0)
-    
-    def saveImage(self):
-        cv2.imwrite("image.png", self.image_frame)
-
     
     def loadVideo(self, dt):
         # display image from cam in opencv window
@@ -215,9 +196,13 @@ class MainApp(MDApp):
         self.capture.release()
         self.root.get_screen('camera').ids.layout.remove_widget(self.image)
         cv2.destroyAllWindows()
+        self.root.transition = SlideTransition(direction="right")
+        self.root.current = 'home'
+
+    def open_settings(self):
         self.root.transition = SlideTransition(direction="left")
-        self.root.current = 'camerainit'
-    
+        self.root.current = 'settings'
+
     def textToSpeech(self, text):
         self.engine.say(text)
         self.engine.runAndWait()

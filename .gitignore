@@ -6,3 +6,4 @@ client_secrets.json
 dependencies
 coursework-test-ssdmobilenet
 coursework-test
+__pycache__

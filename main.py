@@ -44,7 +44,8 @@ WindowManager:
             halign: 'center'
         MDTextButton:
             text: 'Settings'
-            pos_hint: {"center_x": 0.5}
+            font_style: 'Subtitle1' 
+            pos_hint: {"center_x": 0.5, "center_y": 0.1}
             on_press: root.manager.current = 'settings'
 
 <SettingsScreen>:
@@ -52,35 +53,41 @@ WindowManager:
     MDScreen:
         orientation: 'vertical'
         MDFillRoundFlatIconButton:
-            icon: "back"
+            icon: 'chevron_left'
             text: "Back"
-            pos_hint: {"center_x": 0.1, "center_y": 0.9}
+            pos_hint: {"center_x": 0.1, "center_y": 0.95}
             font_style: 'Caption'
             text_color: 1, 1, 1, 1
-            border_color: 0, 0, 0, 0
+            background_color: 0, 0, 0, 0
         MDLabel:
             text: "Settings"
-            pos_hint: {"center_x": 0.5, "center_y": 0.9}
+            pos_hint: {"center_x": 0.5, "center_y": 0.95}
             font_style: 'H5'
             halign: 'center'
         MDLabel:
             id: MyCoolID
             text: "Choose your preferred mode!"
-            pos_hint: {"center_x": 0.5, "center_y": 0.7}
+            pos_hint: {"center_x": 0.5, "center_y": 0.8}
             font_style: 'H4'
             halign: 'center'
         MDFlatButton:
             text: 'Sound Map'
-            pos_hint: {"center_x": 0.3, "center_y": 0.3}
-            size_hint: 0.35, 0.45
+            pos_hint: {"center_x": 0.275, "center_y": 0.45}
+            size_hint: 0.425, 0.525
             md_bg_color: app.theme_cls.primary_light
-            on_press: app.changeText("Sound")
+            on_press: app.changeText("Sound Map.")
         MDFlatButton:
             text: 'Audible Reminders'
-            pos_hint: {"center_x": 0.7, "center_y": 0.3}
-            size_hint: 0.35, 0.45
+            pos_hint: {"center_x": 0.725, "center_y": 0.45}
+            size_hint: 0.425, 0.525
             md_bg_color: app.theme_cls.primary_light
-            on_press: app.changeText("Audible")
+            on_press: app.changeText("Audible Reminders.")
+        MDFlatButton:
+            text: 'temp toCamera button'
+            pos_hint: {"center_x": 0.5, "center_y": 0.05}
+            font_style: 'Caption'
+            md_bg_color: app.theme_cls.primary_light
+            on_press: app.goToCamera()
 
 <CameraInitScreen>:
     name: 'camerainit'
@@ -151,11 +158,16 @@ class MainApp(MDApp):
         return Builder.load_string(KIVY_CONFIG)
 
     def changeText(self, word):
-        text = self.root.get_screen("settings").ids.MyCoolID.text
+        self.root.get_screen("settings").ids.MyCoolID.text = "You have selected " + word
+        '''
         if text == "You selected " + word:
             self.root.current = 'camerainit'
         else:
             self.root.get_screen("settings").ids.MyCoolID.text = "You selected " + word
+        '''
+    
+    def goToCamera(self):
+        self.root.current = 'camerainit'
 
     def prestartcam(self):
         self.root.transition = NoTransition()

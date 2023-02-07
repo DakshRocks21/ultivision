@@ -40,6 +40,7 @@ WindowManager:
 <HomeScreen>:
     name: 'home'
     MDScreen:
+        
         orientation: 'vertical'
         MDLabel:
             text: 'Welcome to Our App!'
@@ -129,16 +130,11 @@ class WindowManager(ScreenManager):
 
 ## / MAIN CODE /##
 
-
 class MainApp(MDApp):
 
 
     def build(self):
         self.config = load_config()
-        self.dialog = None
-        self.engine = pyttsx3.init()
-        self.engine.setProperty('rate', self.config['tts']['rate'])
-        self.engine.setProperty('volume', self.config['tts']['volume'])
 
         self.r = sr.Recognizer()
         self.mic = sr.Microphone()
@@ -150,7 +146,6 @@ class MainApp(MDApp):
         self.theme_cls.primary_hue = self.config['theme']['hue']
         self.CAMERA = self.config['camera']['number']
         self.oncam = False
-
 
         return Builder.load_string(KIVY_CONFIG)
     
@@ -166,8 +161,6 @@ class MainApp(MDApp):
     def on_stop(self):
         if self.oncam:
             self.stopcam()
-        self.engine.stop()
-        self.engine.runAndWait()
 
     def startcam(self):
         self.image = Image()  # create image here as startcam is in another thread
@@ -179,6 +172,7 @@ class MainApp(MDApp):
             int(self.CAMERA))  # select camera input
         # load camera view at 30 frames per second
         Clock.schedule_interval(self.loadVideo, 1.0/30.0)
+
     
     def loadVideo(self, dt):
         # display image from cam in opencv window
@@ -203,9 +197,6 @@ class MainApp(MDApp):
         self.root.transition = SlideTransition(direction="left")
         self.root.current = 'settings'
 
-    def textToSpeech(self, text):
-        self.engine.say(text)
-        self.engine.runAndWait()
     
     def speechToText(self):
         with self.mic as source:
@@ -221,5 +212,4 @@ class MainApp(MDApp):
                 "Could not request results from Google Speech Recognition service; {0}".format(e))
 
 def launchApp():
-    
     MainApp().run()  # start Kivy app

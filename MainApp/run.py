@@ -16,6 +16,9 @@ from kivy.base import EventLoop
 import pyttsx3
 import speech_recognition as sr
 
+##/ UTILS IMPORTS /##
+from MainApp.utils.config import load_config
+
 ## / OTHER IMPORTS /##
 import cv2
 import numpy as np
@@ -145,24 +148,27 @@ class MainApp(MDApp):
 
 
     def build(self):
+        self.config = load_config()
+
         self.engine = pyttsx3.init()
-        self.engine.setProperty('rate', 150)
-        self.engine.setProperty('volume', 1)
+        self.engine.setProperty('rate', self.config['tts']['rate'])
+        self.engine.setProperty('volume', self.config['tts']['volume'])
 
         self.r = sr.Recognizer()
         self.mic = sr.Microphone()
 
+        self.config = load_config()
 
-        self.theme_cls.theme_style = "Light"
-        self.theme_cls.primary_palette = "Orange"
-        self.theme_cls.primary_hue = "300"
-        self.CAMERA = 0
+        self.theme_cls.theme_style = self.config['theme']['style']
+        self.theme_cls.primary_palette = self.config['theme']['palette']
+        self.theme_cls.primary_hue = self.config['theme']['hue']
+        self.CAMERA = self.config['camera']['number']
         self.oncam = False
 
 
         return Builder.load_string(KIVY_CONFIG)
     
-    
+
     def changeText(self, word):
         text = self.root.get_screen("settings").ids.MyCoolID.text 
         if text == "You selected " + word:
@@ -196,6 +202,7 @@ class MainApp(MDApp):
     def loadVideo(self, dt):
         # display image from cam in opencv window
         ret, frame = self.capture.read()
+        self.image_frame = frame
         if ret:
             buf = cv2.flip(frame, 0).tostring()
             texture = Texture.create(size=(frame.shape[1], frame.shape[0]), colorfmt='bgr') 
@@ -206,6 +213,7 @@ class MainApp(MDApp):
     def stopcam(self):
         self.oncam = False
         self.capture.release()
+        self.root.get_screen('camera').ids.layout.remove_widget(self.image)
         cv2.destroyAllWindows()
         self.root.transition = SlideTransition(direction="left")
         self.root.current = 'camerainit'

@@ -2,3 +2,4 @@ DATA_PATH = "data"
 DEPENDENCIES_PATH = f"{DATA_PATH}/dependencies"
 MODEL_GARDEN_PATH = f"{DEPENDENCIES_PATH}/model_garden"
 PREFERRED_FILENAME = f'{DATA_PATH}/preferred.txt'
+CONFIG_PATH = f"{DATA_PATH}/config.json"

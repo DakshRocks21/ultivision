@@ -41,7 +41,7 @@ WindowManager:
         orientation: 'vertical'
         MDLabel:
             text: 'Welcome to Our App!'
-            font_style: 'H4' 
+            font_style: 'H4'
             halign: 'center'
         MDTextButton:
             text: 'Settings'
@@ -114,26 +114,48 @@ WindowManager:
 '''
 
 # Class's written by Daksh
+
+
 class HomeScreen(Screen):
     pass
+
+
 class SettingsScreen(Screen):
     pass
+
+
 class CameraInitScreen(Screen):
     pass
+
+
 class CameraScreen(Screen):
     pass
+
+
 class WindowManager(ScreenManager):
     pass
 
 ## / MAIN CODE /##
+
+
 class MainApp(MDApp):
-    
+
+
     def build(self):
+        self.engine = pyttsx3.init()
+        self.engine.setProperty('rate', 150)
+        self.engine.setProperty('volume', 1)
+
+        self.r = sr.Recognizer()
+        self.mic = sr.Microphone()
+
+
         self.theme_cls.theme_style = "Light"
         self.theme_cls.primary_palette = "Orange"
         self.theme_cls.primary_hue = "300"
         self.CAMERA = 0
         self.oncam = False
+
 
         return Builder.load_string(KIVY_CONFIG)
     
@@ -217,14 +239,14 @@ class MainApp(MDApp):
             self.root.current = 'camerainit'
     
     def textToSpeech(self, text):
-        engine.say(text)
-        engine.runAndWait()
+        self.engine.say(text)
+        self.engine.runAndWait()
     
     def speechToText(self):
-        with sr.Microphone() as source:
-            audio = r.listen(source)
+        with self.mic as source:
+            audio = self.r.listen(source)
         try:
-            text = r.recognize_google(audio)
+            text = self.r.recognize_google(audio)
             print("You said: " + text)
             return text
         except sr.UnknownValueError:
@@ -234,6 +256,5 @@ class MainApp(MDApp):
                 "Could not request results from Google Speech Recognition service; {0}".format(e))
 
 def launchApp():
-    engine = pyttsx3.init()  # start TTS engine
-    # r = sr.Recognizer()
+    
     MainApp().run()  # start Kivy app

@@ -1,3 +1,8 @@
 .DS_Store
 # To make sure you don't accidentally commit a picture of your face :D
 image.png
+
+client_secrets.json
+dependencies
+coursework-test-ssdmobilenet
+coursework-test

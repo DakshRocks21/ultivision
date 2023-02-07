@@ -2,3 +2,6 @@ kivymd
 pyttsx3
 SpeechRecognition
 opencv-python
+PyDrive2
+
+tensorflow==2.10.1

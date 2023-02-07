@@ -92,7 +92,7 @@ WindowManager:
             text: 'Start Camera'
             pos_hint: {"center_x": 0.5, "center_y": 0.3}
             md_bg_color: app.theme_cls.primary_light
-            on_press: app.prestartcam()
+            on_press: app.startcam()
 <CameraScreen>:
     name: 'camera'
     MDScreen:
@@ -101,6 +101,8 @@ WindowManager:
             text: 'Camera Page'
             font_style: 'H4'
             pos_hint: {"center_x": 0.5, "center_y": 0.9}
+        BoxLayout:
+            id: layout
         MDFlatButton:
             text: 'Stop Camera'
             pos_hint: {"center_x": 0.3, "center_y": 0.1}
@@ -111,11 +113,7 @@ WindowManager:
             pos_hint: {"center_x": 0.7, "center_y": 0.1}
             md_bg_color: app.theme_cls.primary_light
             on_press: app.saveImage()
-        MDBoxLayout:
-            id: layout
-            orientation: 'vertical'
-            size_hint_y: None
-            height: self.minimum_height
+        
 '''
 
 # Class's written by Daksh
@@ -165,81 +163,52 @@ class MainApp(MDApp):
         return Builder.load_string(KIVY_CONFIG)
     
     
-    def on_start(self):
-        EventLoop.window.bind(on_keyboard=self.hook_keyboard)
-    
-    def destroy_all(self):
-        self.stopcam(status="destroy")
-    
-    def hook_keyboard(self, window, key, *largs):
-        self.destroy_all()
-        if key == 27:
-            if self.root.current == 'home':
-                return False
-            self.root.current = 'home'
-            return True
-    
     def changeText(self, word):
         text = self.root.get_screen("settings").ids.MyCoolID.text 
         if text == "You selected " + word:
             self.root.current = 'camerainit'
         else:
             self.root.get_screen("settings").ids.MyCoolID.text = "You selected " + word
-    
-    def prestartcam(self):
+
+    def on_stop(self):
+        if self.oncam:
+            self.stopcam()
+        self.engine.stop()
+        self.engine.runAndWait()
+
+
+    def startcam(self):
         self.image = Image()  # create image here as startcam is in another thread
         self.root.get_screen('camera').ids.layout.add_widget(self.image)
         self.root.transition = NoTransition()
         self.root.current = 'camera'
         self.oncam = True
-        threading.Thread(target=self.startcam).start()
-    
-    def startcam(self):
         print("cam started")
         self.capture = cv2.VideoCapture(
             int(self.CAMERA))  # select camera input
         # load camera view at 30 frames per second
-        _,frame = self.capture.read()
-        Clock.schedule_interval(self.loadVideo(frame), 1.0/30.0)
-        self.oncam = True
+        Clock.schedule_interval(self.loadVideo, 1.0/30.0)
     
     def saveImage(self):
         cv2.imwrite("image.png", self.image_frame)
-    
-    def generate_texture(self):
-        """Generate random numpy array, plot it, save it, and convert to Texture."""
-        
-        # numpy array
-        arr = np.random.randint(0, 100, size=10, dtype=np.uint8)
-        
-        # plot
-        plt.clf() # remove previous plot
-        plt.plot(arr)
-        
-        # save in memory
-        data = io.BytesIO()
-        plt.savefig(data)
-        
-        data.seek(0)  # move to the beginning of file
-        
-        return CoreImage(data, ext='png').texture
+
     
     def loadVideo(self, dt):
+        # display image from cam in opencv window
         ret, frame = self.capture.read()
         if ret:
-            self.image_frame = frame
-            buf = cv2.flip(self.image_frame, 0).tobytes()
-            texture = Texture.create(size=(self.image_frame.shape[1], self.image_frame.shape[0]), colorfmt='bgr').blit_buffer(
-                buf, colorfmt='bgr', bufferfmt='ubyte')
-            self.image.texture = self.generate_texture()
-    
-    def stopcam(self, status):
+            buf = cv2.flip(frame, 0).tostring()
+            texture = Texture.create(size=(frame.shape[1], frame.shape[0]), colorfmt='bgr') 
+            texture.blit_buffer(buf, colorfmt='bgr', bufferfmt='ubyte')
+            # display image from the texture
+            self.image.texture = texture
+
+    def stopcam(self):
         self.oncam = False
         self.capture.release()
         cv2.destroyAllWindows()
-        if status == "camerastop":
-            self.root.transition = SlideTransition(direction="left")
-            self.root.current = 'camerainit'
+        self.root.transition = SlideTransition(direction="left")
+        self.root.current = 'camerainit'
     
     def textToSpeech(self, text):
         self.engine.say(text)

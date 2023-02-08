@@ -12,7 +12,8 @@
 `Install protobuf-compiler for Ubuntu and protobuf for macOS first!!`
 
 ```py
-pip install -r requirements.txt
+pip install -q -r requirements.txt #for no output
+pip install -r requirements.txt #for output
 ```
 
 ## Usage

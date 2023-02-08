@@ -11,7 +11,9 @@ def create_config():
         "tts" : {"rate": 150, "volume": 1},
         "camera" : {"number": 0},
         "theme" : {"style": "Light", "palette": "Orange", "hue": "300"},
-        "settings" : {"mode": 1}
+        "settings" : {"mode": 1},
+        "largest_checkpoint_num" : "",
+        "model_name" : ""
     }
     with open(CONFIG_PATH, "w") as f:
         json.dump(config, f)
@@ -24,7 +26,7 @@ def check_if_config_exists():
         create_config()
 
 
-def change_config(key, value):
+def change_config(value, key):
     with open(CONFIG_PATH, "r") as f:
         config = json.load(f)
     config[key] = value

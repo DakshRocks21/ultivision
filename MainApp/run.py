@@ -1,3 +1,4 @@
+
 ## / KIVY IMPORTS /##
 from kivy.uix.boxlayout import BoxLayout
 from kivymd.app import MDApp
@@ -20,6 +21,14 @@ import speech_recognition as sr
 
 ##/ UTILS IMPORTS /##
 from MainApp.utils.config import load_config, create_config
+from MainApp.utils.constants import LABELMAP_FILENAME, DATA_PATH
+
+##/ TENSOFLOW IMPORTS /##
+import tensorflow as tf
+from object_detection.utils import label_map_util
+from object_detection.utils import visualization_utils as viz_utils
+from object_detection.builders import model_builder
+from object_detection.utils import config_util
 
 ## / OTHER IMPORTS /##
 import cv2
@@ -128,27 +137,83 @@ class CameraScreen(Screen):
 class WindowManager(ScreenManager):
     pass
 
-## / MAIN CODE /##
+## / MAIN CODE  2/##
+#"""
+class TensorflowThread(threading.Thread):
+    def __init__(self, app):
+        self.json_config = load_config()
+        self.largest_checkpoint_num = self.json_config['largest_checkpoint_num']
+        self.model_name = self.json_config['model_name']
+        configs = config_util.get_configs_from_pipeline_file(f"{DATA_PATH}/{self.model_name}/pipeline.config")
+        detection_model = model_builder.build(model_config=configs['model'], is_training=True)
+
+        # Restore checkpoint
+        ckpt = tf.compat.v2.train.Checkpoint(model=detection_model)
+        ckpt.restore(f"{DATA_PATH}/{self.model_name}/ckpt-{self.largest_checkpoint_num}.index").expect_partial()
+        print("Checkpoint restored!")
+        self.detection_model = detection_model
+        
+        self.category_index = label_map_util.create_category_index_from_labelmap(LABELMAP_FILENAME)
+        print("Labels loaded!")
+
+
+    @tf.function
+    def detect_fn(self, image):
+        image, shapes = self.detection_model.preprocess(image)
+        print("HERE3")
+        prediction_dict = self.detection_model.predict(image, shapes)
+        print("HERE2")
+        detections = self.detection_model.postprocess(prediction_dict, shapes)
+        print("HERE")
+        return detections
+    def run(self, frame):
+        image_np = np.array(frame)
+        
+        input_tensor = tf.convert_to_tensor(np.expand_dims(image_np, 0), dtype=tf.float32)
+        detections = self.detect_fn(input_tensor)
+        
+        num_detections = int(detections.pop('num_detections'))
+        detections = {key: value[0, :num_detections].numpy()
+                    for key, value in detections.items()}
+        detections['num_detections'] = num_detections
+
+        detections['detection_classes'] = detections['detection_classes'].astype(np.int64)
+
+        label_id_offset = 1
+        image_np_with_detections = image_np.copy()
+
+        return viz_utils.visualize_boxes_and_labels_on_image_array(
+                    image_np_with_detections,
+                    detections['detection_boxes'],
+                    detections['detection_classes']+label_id_offset,
+                    detections['detection_scores'],
+                    self.category_index,
+                    use_normalized_coordinates=True,
+                    max_boxes_to_draw=10,
+                    min_score_thresh=.3,
+                    agnostic_mode=False)
+
+    def stop(self):
+        self.stop = True
 
 class MainApp(MDApp):
 
-
     def build(self):
-        self.config = load_config()
-
+        self.json_config = load_config()
         self.r = sr.Recognizer()
         self.mic = sr.Microphone()
-
         self.config = load_config()
-
-        self.theme_cls.theme_style = self.config['theme']['style']
-        self.theme_cls.primary_palette = self.config['theme']['palette']
-        self.theme_cls.primary_hue = self.config['theme']['hue']
+        self.theme_cls.theme_style = self.json_config['theme']['style']
+        self.theme_cls.primary_palette = self.json_config['theme']['palette']
+        self.theme_cls.primary_hue = self.json_config['theme']['hue']
         self.CAMERA = self.config['camera']['number']
         self.oncam = False
 
+        print("Initializing Tensorflow...")
+        self.tensorflow_thread = TensorflowThread(self)
+        print("Tensorflow Initialized!")
+
         return Builder.load_string(KIVY_CONFIG)
-    
 
     def changeText(self, word):
         text = self.root.get_screen("settings").ids.MyCoolID.text 
@@ -168,22 +233,144 @@ class MainApp(MDApp):
         self.root.transition = SlideTransition(direction="left")
         self.root.current = 'camera'
         self.oncam = True
-        self.capture = cv2.VideoCapture(
-            int(self.CAMERA))  # select camera input
-        # load camera view at 30 frames per second
+        self.capture = cv2.VideoCapture(int(self.CAMERA))
         Clock.schedule_interval(self.loadVideo, 1.0/30.0)
 
     
     def loadVideo(self, dt):
-        # display image from cam in opencv window
-        ret, frame = self.capture.read()
-        self.image_frame = frame
-        if ret:
-            buf = cv2.flip(frame, 0).tostring()
-            texture = Texture.create(size=(frame.shape[1], frame.shape[0]), colorfmt='bgr') 
-            texture.blit_buffer(buf, colorfmt='bgr', bufferfmt='ubyte')
-            # display image from the texture
-            self.image.texture = texture
+        if self.oncam and self.capture.isOpened():
+            ret, frame = self.capture.read()
+            new_frame = self.tensorflow_thread.run(frame)
+            cv2.imshow('object detection',  cv2.resize(new_frame, (800, 600)))
+            if ret:
+                buf = cv2.flip(frame, 0).tostring()
+                texture = Texture.create(size=(new_frame.shape[1], new_frame.shape[0]), colorfmt='bgr') 
+                texture.blit_buffer(buf, colorfmt='bgr', bufferfmt='ubyte')
+
+                # display image from the texture
+                self.image.texture = texture
+    
+
+    def stopcam(self):
+        self.oncam = False
+        self.capture.release()
+        self.root.get_screen('camera').ids.layout.remove_widget(self.image)
+        cv2.destroyAllWindows()
+        self.root.transition = SlideTransition(direction="right")
+        self.root.current = 'home'
+
+    def open_settings(self):
+        self.root.transition = SlideTransition(direction="left")
+        self.root.current = 'settings'
+#"""
+
+"""
+class MainApp(MDApp):
+
+
+    def build(self):
+        self.json_config = load_config()
+        self.r = sr.Recognizer()
+        self.mic = sr.Microphone()
+        self.config = load_config()
+        self.theme_cls.theme_style = self.json_config['theme']['style']
+        self.theme_cls.primary_palette = self.json_config['theme']['palette']
+        self.theme_cls.primary_hue = self.json_config['theme']['hue']
+        self.CAMERA = self.config['camera']['number']
+        self.oncam = False
+
+        self.largest_checkpoint_num = self.json_config['largest_checkpoint_num']
+        self.model_name = self.json_config['model_name']
+        print("Initializing Tensorflow...")
+        self.initTensorflow()
+        print("Tensorflow Initialized!")
+
+        return Builder.load_string(KIVY_CONFIG)
+
+    @tf.function
+    def detect_fn(self, image):
+        image, shapes = self.detection_model.preprocess(image)
+        print("HERE3")
+        prediction_dict = self.detection_model.predict(image, shapes)
+        print("HERE2")
+        detections = self.detection_model.postprocess(prediction_dict, shapes)
+        print("HERE")
+        return detections
+
+    def initTensorflow(self):
+        configs = config_util.get_configs_from_pipeline_file(f"{DATA_PATH}/{self.model_name}/pipeline.config")
+        detection_model = model_builder.build(model_config=configs['model'], is_training=True)
+
+        # Restore checkpoint
+        ckpt = tf.compat.v2.train.Checkpoint(model=detection_model)
+        ckpt.restore(f"{DATA_PATH}/{self.model_name}/ckpt-{self.largest_checkpoint_num}.index").expect_partial()
+        print("Checkpoint restored!")
+        self.detection_model = detection_model
+        
+        self.category_index = label_map_util.create_category_index_from_labelmap(LABELMAP_FILENAME)
+        print("Labels loaded!")
+
+    def changeText(self, word):
+        text = self.root.get_screen("settings").ids.MyCoolID.text 
+        if text == "You selected " + word:
+            self.root.transition = SlideTransition(direction="right")
+            self.root.current = 'camera'
+        else:
+            self.root.get_screen("settings").ids.MyCoolID.text = "You selected " + word
+
+    def on_stop(self):
+        if self.oncam:
+            self.stopcam()
+
+    def startcam(self):
+        self.image = Image()  # create image here as startcam is in another thread
+        self.root.get_screen('camera').ids.layout.add_widget(self.image)
+        self.root.transition = SlideTransition(direction="left")
+        self.root.current = 'camera'
+        self.oncam = True
+        self.capture = cv2.VideoCapture(int(self.CAMERA))
+        Clock.schedule_interval(self.loadVideo, 1.0/30.0)
+
+    
+    def loadVideo(self, dt):
+        if self.oncam and self.capture.isOpened():
+            ret, frame = self.capture.read()
+            new_frame = self.show_model(frame)
+            cv2.imshow('object detection',  cv2.resize(new_frame, (800, 600)))
+            if ret:
+                buf = cv2.flip(frame, 0).tostring()
+                texture = Texture.create(size=(new_frame.shape[1], new_frame.shape[0]), colorfmt='bgr') 
+                texture.blit_buffer(buf, colorfmt='bgr', bufferfmt='ubyte')
+
+                # display image from the texture
+                self.image.texture = texture
+    
+    def show_model(self, frame):
+        image_np = np.array(frame)
+    
+        input_tensor = tf.convert_to_tensor(np.expand_dims(image_np, 0), dtype=tf.float32)
+        detections = self.detect_fn(input_tensor)
+        
+        num_detections = int(detections.pop('num_detections'))
+        detections = {key: value[0, :num_detections].numpy()
+                    for key, value in detections.items()}
+        detections['num_detections'] = num_detections
+
+        detections['detection_classes'] = detections['detection_classes'].astype(np.int64)
+
+        label_id_offset = 1
+        image_np_with_detections = image_np.copy()
+
+        return viz_utils.visualize_boxes_and_labels_on_image_array(
+                    image_np_with_detections,
+                    detections['detection_boxes'],
+                    detections['detection_classes']+label_id_offset,
+                    detections['detection_scores'],
+                    self.category_index,
+                    use_normalized_coordinates=True,
+                    max_boxes_to_draw=10,
+                    min_score_thresh=.3,
+                    agnostic_mode=False)
 
     def stopcam(self):
         self.oncam = False
@@ -210,6 +397,7 @@ class MainApp(MDApp):
         except sr.RequestError as e:
             print(
                 "Could not request results from Google Speech Recognition service; {0}".format(e))
-
+"""
 def launchApp():
     MainApp().run()  # start Kivy app
+

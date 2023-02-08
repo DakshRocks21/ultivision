@@ -3,5 +3,7 @@ pyttsx3
 SpeechRecognition
 opencv-python
 PyDrive2
-
+numpy 
+protobuf
+pyaudio
 tensorflow==2.10.1

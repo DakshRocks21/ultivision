@@ -6,6 +6,8 @@ def download_dependencies():
     print("This script will now download the best performing model from Google Drive.")
     print()
     print("Seting up the environment and installing dependencies...")
+    print()
+    os.system("brew install portaudio")
     os.system("pip3 install -r requirements.txt")
     
     # Clone TensorFlow Model Garden if it has not been cloned yet

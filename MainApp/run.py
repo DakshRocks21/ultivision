@@ -3,8 +3,7 @@
 from kivy.uix.boxlayout import BoxLayout
 from kivymd.app import MDApp
 from kivymd.uix.label import MDLabel
-from kivymd.uix.button import MDTextButton
-from kivymd.uix.button import MDFlatButton
+from kivymd.uix.button import MDFlatButton, MDRaisedButton, MDTextButton
 from kivy.lang import Builder
 from kivy.uix.screenmanager import ScreenManager, Screen
 from kivy.uix.image import Image, CoreImage
@@ -16,12 +15,11 @@ from kivymd.icon_definitions import md_icons
 from kivymd.uix.dialog import MDDialog
 
 ## / TTS IMPORTS /##
-import pyttsx3
-import speech_recognition as sr
+from playsound import playsound
 
 ##/ UTILS IMPORTS /##
 from MainApp.utils.config import load_config, create_config
-from MainApp.utils.constants import LABELMAP_FILENAME, DATA_PATH, LABELMAP_FILENAME_PATH
+from MainApp.utils.constants import LABELMAP_FILENAME, DATA_PATH, LABELMAP_FILENAME_PATH, CASE
 
 ##/ TENSOFLOW IMPORTS /##
 import tensorflow as tf
@@ -45,12 +43,13 @@ import io
 KIVY_CONFIG = '''
 WindowManager:
     HomeScreen:
+    LoadingScreen:
     SettingsScreen:
     CameraScreen:
+
 <HomeScreen>:
     name: 'home'
     MDScreen:
-        
         orientation: 'vertical'
         MDLabel:
             text: 'Welcome to Our App!'
@@ -62,6 +61,16 @@ WindowManager:
             font_style: 'Subtitle1' 
             pos_hint: {"center_x": 0.5, "center_y": 0.1}
             on_press: app.startcam()
+
+<LoadingScreen>:
+    name: 'loading'
+    MDScreen:
+        orientation: 'vertical'
+        MDLabel:
+            text: 'Loading...'
+            font_style: 'H4'
+            halign: 'center'
+
 <SettingsScreen>:
     name: 'settings'
     MDScreen:
@@ -97,6 +106,7 @@ WindowManager:
             size_hint: 0.425, 0.525
             md_bg_color: app.theme_cls.primary_light
             on_press: app.changeText("Audible Reminders.")
+
 <CameraScreen>:
     name: 'camera'
     MDScreen:
@@ -117,15 +127,14 @@ WindowManager:
             pos_hint: {"center_x": 0.7, "center_y": 0.1}
             md_bg_color: app.theme_cls.primary_light
             on_press: app.stopcam()
-        
 '''
-
-# Class's written by Daksh
 
 
 class HomeScreen(Screen):
     pass
 
+class LoadingScreen(Screen):
+    pass
 
 class SettingsScreen(Screen):
     pass
@@ -142,16 +151,30 @@ class WindowManager(ScreenManager):
 class MainApp(MDApp):
 
     def build(self):
+        self.image = Image()
+        self.get_labels()
         self.json_config = load_config()
-        self.r = sr.Recognizer()
-        self.mic = sr.Microphone()
+        #self.r = sr.Recognizer()
+        #self.mic = sr.Microphone()
         self.config = load_config()
+        self.tensorflowThread = Thread(target=tensorflow, args=(inputQ, outputQ))
+        self.tensorflowThread.start()
+        
+
         self.theme_cls.theme_style = self.json_config['theme']['style']
         self.theme_cls.primary_palette = self.json_config['theme']['palette']
         self.theme_cls.primary_hue = self.json_config['theme']['hue']
         self.CAMERA = self.config['camera']['number']
         self.oncam = False
+        
         return Builder.load_string(KIVY_CONFIG)
+
+    def get_labels(self):
+        self.category_index = label_map_util.create_category_index_from_labelmap(LABELMAP_FILENAME_PATH, use_display_name=True)
+        for key, value in self.category_index.items():
+            labels.append(value["name"].lower())
+
+
 
     def changeText(self, word):
         text = self.root.get_screen("settings").ids.MyCoolID.text 
@@ -166,17 +189,19 @@ class MainApp(MDApp):
             self.stopcam()
 
     def startcam(self):
-        self.image = Image()  # create image here as startcam is in another thread
+        self.root.transition = SlideTransition(direction="right")
+        self.root.current = 'loading'
+        print("Starting Camera...")
+        self.capture = cv2.VideoCapture(int(self.CAMERA))
+        print("Camera Started!")
+        self.oncam = True
         self.root.get_screen('camera').ids.layout.add_widget(self.image)
+        print("Camera Added to Screen!")
         self.root.transition = SlideTransition(direction="left")
         self.root.current = 'camera'
-        self.oncam = True
-        self.capture = cv2.VideoCapture(int(self.CAMERA))
-        self.tensorflowThread = Thread(target=tensorflow, args=(inputQ, outputQ))
-        self.tensorflowThread.start()
+        print("Camera Screen Loaded!")
         Clock.schedule_interval(self.loadVideo, 1.0/30.0)
-
-
+        print("Camera Started!")
     
     def loadVideo(self, dt):
         if self.oncam and self.capture.isOpened():
@@ -202,9 +227,7 @@ class MainApp(MDApp):
         self.root.transition = SlideTransition(direction="left")
         self.root.current = 'settings'
 
-
-
-def tensorflow(outputQ, inputQ):
+def tensorflow(output, input1):
     json_config = load_config()
     configs = config_util.get_configs_from_pipeline_file(f"{DATA_PATH}/{json_config['model_name']}/pipeline.config")
     detection_model = model_builder.build(model_config=configs['model'], is_training=False)
@@ -216,13 +239,12 @@ def tensorflow(outputQ, inputQ):
         image, shapes = detection_model.preprocess(image)
         prediction_dict = detection_model.predict(image, shapes)
         detections = detection_model.postprocess(prediction_dict, shapes)
-        print("here")
         return detections
 
-    category_index = label_map_util.create_category_index_from_labelmap(LABELMAP_FILENAME)
-    print(stop_threads)
+    category_index = label_map_util.create_category_index_from_labelmap(LABELMAP_FILENAME_PATH)
+    
     while not stop_threads: 
-        frame = inputQ.get()
+        frame = input1.get()
         image_np = np.array(frame)
         
         input_tensor = tf.convert_to_tensor(np.expand_dims(image_np, 0), dtype=tf.float32)
@@ -246,15 +268,28 @@ def tensorflow(outputQ, inputQ):
                     category_index,
                     use_normalized_coordinates=True,
                     max_boxes_to_draw=10,
-                    min_score_thresh=.3,
+                    min_score_thresh=min_score_thresh,
                     agnostic_mode=False)
+        input1.task_done()
 
-        outputQ.put(image_np_with_detections)
+        highest_prob = detections['detection_scores'][0]
+        if highest_prob > min_score_thresh:
+            object = detections['detection_classes'][0]
+            try:
+                playsound(f"{DATA_PATH}/sound/{labels[object]}.mp3" , block=False)
+            except:
+                pass
+
+        output.put(image_np_with_detections)
 
 
 def launchApp():
     global stop_threads
+    global labels
+    global min_score_thresh
+    min_score_thresh = 0.5
     stop_threads = False
+    labels = []
     global inputQ, outputQ
     inputQ = Queue()
     outputQ = Queue()

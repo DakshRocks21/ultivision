@@ -7,3 +7,4 @@ numpy
 protobuf
 pyaudio
 tensorflow==2.10.1
+playsound

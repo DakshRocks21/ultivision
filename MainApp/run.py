@@ -13,6 +13,7 @@ from kivy.graphics.texture import Texture
 from kivy.base import EventLoop
 from kivymd.icon_definitions import md_icons
 from kivymd.uix.dialog import MDDialog
+from kivymd.uix.menu import MDDropdownMenu
 
 ## / TTS IMPORTS /##
 from playsound import playsound
@@ -40,7 +41,7 @@ import io
 
 ## / KIVY UI /##
 
-KIVY_CONFIG = '''
+KV = """
 WindowManager:
     HomeScreen:
     LoadingScreen:
@@ -106,6 +107,16 @@ WindowManager:
             size_hint: 0.425, 0.525
             md_bg_color: app.theme_cls.primary_light
             on_press: app.changeText("Audible Reminders.")
+        MDSwitch:
+            pos_hint: {'center_x': .3, 'center_y': .1}
+            on_active: app.on_switch_active(*args)
+
+        MDRectangleFlatIconButton:
+            id: button
+            text: "Woah Dropdown"
+            icon: "language-python"
+            pos_hint: {"center_x": .7, "center_y": .1}
+            on_release: app.dropdown1.open()
 
 <CameraScreen>:
     name: 'camera'
@@ -127,7 +138,7 @@ WindowManager:
             pos_hint: {"center_x": 0.7, "center_y": 0.1}
             md_bg_color: app.theme_cls.primary_light
             on_press: app.stopcam()
-'''
+"""
 
 
 class HomeScreen(Screen):
@@ -167,13 +178,28 @@ class MainApp(MDApp):
         self.CAMERA = self.config['camera']['number']
         self.oncam = False
         
-        return Builder.load_string(KIVY_CONFIG)
+        return Builder.load_string(KV)
 
     def get_labels(self):
         self.category_index = label_map_util.create_category_index_from_labelmap(LABELMAP_FILENAME_PATH, use_display_name=True)
         for key, value in self.category_index.items():
             labels.append(value["name"].lower())
+    def on_switch_active(self, switch, value):
+        if value:
+            print("Switch on")
+        else:
+            print("Switch off")
 
+    def on_start(self):
+        menu_items = [
+            {
+                "viewclass": "OneLineListItem",
+                "text": "Option1",
+                "on_release": lambda *args: self.callback()
+            }
+        ]
+
+        self.dropdown1 = MDDropdownMenu(items=menu_items, width_mult=4, caller=self.root.get_screen("settings").ids.button) 
 
 
     def changeText(self, word):

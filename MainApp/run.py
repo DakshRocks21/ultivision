@@ -19,7 +19,7 @@ from kivymd.uix.menu import MDDropdownMenu
 from playsound import playsound
 
 ##/ UTILS IMPORTS /##
-from MainApp.utils.config import load_config, create_config
+from MainApp.utils.config import load_config, change_config
 from MainApp.utils.constants import LABELMAP_FILENAME, DATA_PATH, LABELMAP_FILENAME_PATH, CASE
 
 ##/ TENSOFLOW IMPORTS /##
@@ -76,14 +76,6 @@ WindowManager:
     name: 'settings'
     MDScreen:
         orientation: 'vertical'
-        MDFillRoundFlatIconButton:
-            icon: 'chevron_left'
-            text: "Back"
-            pos_hint: {"center_x": 0.1, "center_y": 0.95}
-            font_style: 'Caption'
-            text_color: 1, 1, 1, 1
-            background_color: 0, 0, 0, 0
-            on_press: app.root.current = 'camera'
         MDLabel:
             text: "Settings"
             pos_hint: {"center_x": 0.5, "center_y": 0.95}
@@ -108,6 +100,7 @@ WindowManager:
             md_bg_color: app.theme_cls.primary_light
             on_press: app.changeText("Audible Reminders.")
         MDSwitch:
+            id: switch
             pos_hint: {'center_x': .3, 'center_y': .1}
             on_active: app.on_switch_active(*args)
 
@@ -137,7 +130,7 @@ WindowManager:
             text: 'Exit'
             pos_hint: {"center_x": 0.7, "center_y": 0.1}
             md_bg_color: app.theme_cls.primary_light
-            on_press: app.stopcam()
+            on_press: app.stopcam(True)
 """
 
 
@@ -161,21 +154,17 @@ class WindowManager(ScreenManager):
 
 class MainApp(MDApp):
 
-    def build(self):
+    def build(self):        
+        self.tensorflowThread = Thread(target=tensorflow, args=(inputQ, outputQ))
+        self.tensorflowThread.start()
+
         self.image = Image()
         self.get_labels()
         self.json_config = load_config()
-        #self.r = sr.Recognizer()
-        #self.mic = sr.Microphone()
-        self.config = load_config()
-        self.tensorflowThread = Thread(target=tensorflow, args=(inputQ, outputQ))
-        self.tensorflowThread.start()
-        
-
         self.theme_cls.theme_style = self.json_config['theme']['style']
         self.theme_cls.primary_palette = self.json_config['theme']['palette']
         self.theme_cls.primary_hue = self.json_config['theme']['hue']
-        self.CAMERA = self.config['camera']['number']
+        self.CAMERA = self.json_config['camera']['number']
         self.oncam = False
         
         return Builder.load_string(KV)
@@ -184,50 +173,77 @@ class MainApp(MDApp):
         self.category_index = label_map_util.create_category_index_from_labelmap(LABELMAP_FILENAME_PATH, use_display_name=True)
         for key, value in self.category_index.items():
             labels.append(value["name"].lower())
+    
+    def goBackToCamera(self):
+        self.oncam = True
+        self.startcam()
+        self.root.transition = SlideTransition(direction="right")
+        self.root.current = 'camera'
+
     def on_switch_active(self, switch, value):
         if value:
-            print("Switch on")
+            change_config(1, "blind_mode")
         else:
-            print("Switch off")
+            change_config(0, "blind_mode")
 
     def on_start(self):
-        menu_items = [
-            {
-                "viewclass": "OneLineListItem",
-                "text": "Option1",
-                "on_release": lambda *args: self.callback()
-            }
-        ]
+        if self.json_config['blind_mode'] == 1:
+            self.root.get_screen("settings").ids.switch.active = True
+            # switch to camera screen
+            self.startcam()
+
+    def open_settings(self):
+        self.root.transition = SlideTransition(direction="left")
+        self.root.current = 'settings'
+        self.stopcam(False)
+        try:
+            self.root.get_screen('camera').ids.layout.remove_widget(self.image)
+        except:
+            pass
+        menu_items = []
+        for i in range(10):
+            cap = cv2.VideoCapture(i)
+            if cap.read()[0]:
+                menu_items.append({
+                    "viewclass": "OneLineListItem",
+                    "text": "Camera " + str(i),
+                    "on_release": lambda x=i: self.selectCamera(x),
+                })
+                cap.release()
 
         self.dropdown1 = MDDropdownMenu(items=menu_items, width_mult=4, caller=self.root.get_screen("settings").ids.button) 
-
+    
+    def selectCamera(self, i):
+        print("Camera " + str(i) + " selected")
+        self.CAMERA = int(i)
+        self.dropdown1.dismiss()
 
     def changeText(self, word):
         text = self.root.get_screen("settings").ids.MyCoolID.text 
         if text == "You selected " + word:
+            self.startcam()
             self.root.transition = SlideTransition(direction="right")
             self.root.current = 'camera'
         else:
             self.root.get_screen("settings").ids.MyCoolID.text = "You selected " + word
+        
 
     def on_stop(self):
+        stop_threads = True
+        self.tensorflowThread.join(timeout=1)
         if self.oncam:
-            self.stopcam()
+            self.stopcam(0)
+
 
     def startcam(self):
         self.root.transition = SlideTransition(direction="right")
         self.root.current = 'loading'
-        print("Starting Camera...")
         self.capture = cv2.VideoCapture(int(self.CAMERA))
-        print("Camera Started!")
         self.oncam = True
         self.root.get_screen('camera').ids.layout.add_widget(self.image)
-        print("Camera Added to Screen!")
+        Clock.schedule_interval(self.loadVideo, 1.0/30.0)
         self.root.transition = SlideTransition(direction="left")
         self.root.current = 'camera'
-        print("Camera Screen Loaded!")
-        Clock.schedule_interval(self.loadVideo, 1.0/30.0)
-        print("Camera Started!")
     
     def loadVideo(self, dt):
         if self.oncam and self.capture.isOpened():
@@ -241,17 +257,14 @@ class MainApp(MDApp):
                 self.image.texture = texture
                 inputQ.task_done()
 
-    def stopcam(self):
-        stop_threads = True
+    def stopcam(self, condition):
         self.oncam = False
         self.capture.release()
         self.root.get_screen('camera').ids.layout.remove_widget(self.image)
-        self.root.transition = SlideTransition(direction="right")
-        self.root.current = 'home'
+        if condition:
+            self.root.transition = SlideTransition(direction="right")
+            self.root.current = 'home'
 
-    def open_settings(self):
-        self.root.transition = SlideTransition(direction="left")
-        self.root.current = 'settings'
 
 def tensorflow(output, input1):
     json_config = load_config()
@@ -296,6 +309,7 @@ def tensorflow(output, input1):
                     max_boxes_to_draw=10,
                     min_score_thresh=min_score_thresh,
                     agnostic_mode=False)
+
         input1.task_done()
 
         highest_prob = detections['detection_scores'][0]
@@ -313,11 +327,22 @@ def launchApp():
     global stop_threads
     global labels
     global min_score_thresh
+    global blind_mode
+    
+    configs = load_config()
+
+    if configs['blind_mode'] == 1:
+        blind_mode = True
+    else:
+        blind_mode = False
+
     min_score_thresh = 0.5
     stop_threads = False
     labels = []
+
     global inputQ, outputQ
     inputQ = Queue()
     outputQ = Queue()
+
     MainApp().run()
     

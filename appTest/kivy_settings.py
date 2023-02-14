@@ -101,7 +101,7 @@ class MainApp(MDApp):
         else:
             print("Switch off")
 
-    def on_start(self):
+    def on_start(self):      
         menu_items = [
             {
                 "viewclass": "OneLineListItem",

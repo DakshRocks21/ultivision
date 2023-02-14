@@ -13,7 +13,8 @@ def create_config():
         "theme" : {"style": "Light", "palette": "Orange", "hue": "300"},
         "settings" : {"mode": 1},
         "largest_checkpoint_num" : "",
-        "model_name" : ""
+        "model_name" : "",
+        "blind_mode" : 0
     }
     with open(CONFIG_PATH, "w") as f:
         json.dump(config, f)

@@ -40,6 +40,7 @@ import matplotlib.pyplot as plt
 import io
 
 ##/ KIVY UI /##
+#$# Written by Daksh and Richard #$#
 KV = """
 WindowManager:
     HomeScreen:
@@ -102,7 +103,6 @@ WindowManager:
             id: switch
             pos_hint: {'center_x': .3, 'center_y': .1}
             on_active: app.on_switch_active(*args)
-
         MDRectangleFlatIconButton:
             id: button
             text: "Woah Dropdown"
@@ -132,7 +132,7 @@ WindowManager:
             on_press: app.stopcam(True)
 """
 
-
+#$# Written by Daksh #$#
 class HomeScreen(Screen):
     pass
 
@@ -152,6 +152,7 @@ class WindowManager(ScreenManager):
 
 
 ##/ MainApp (KIVY) /##
+#$# Written by Daksh #$#
 class MainApp(MDApp):
 
     ### Kivy Build/Start/Stop Functions ###
@@ -307,6 +308,7 @@ class MainApp(MDApp):
 
 
 ##/  TENSORFLOW FUNCTIONS /##
+#$# Written by Daksh #$#
 def tensorflow(output, input1):
     json_config = load_config()
     configs = config_util.get_configs_from_pipeline_file(f"{DATA_PATH}/{json_config['model_name']}/pipeline.config")
@@ -364,6 +366,7 @@ def tensorflow(output, input1):
         output.put(image_np_with_detections)
 
 ##/  Start App /##
+#$# Written by Daksh #$#
 def launchApp():
     global stop_threads
     global labels

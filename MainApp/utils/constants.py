@@ -1,3 +1,5 @@
+#$# Written by Daksh #$#
+
 DATA_PATH = "data"
 DEPENDENCIES_PATH = f"{DATA_PATH}/dependencies"
 MODEL_GARDEN_PATH = f"{DEPENDENCIES_PATH}/model_garden"

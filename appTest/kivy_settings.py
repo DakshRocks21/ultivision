@@ -1,3 +1,4 @@
+#$# Written by Daksh #$#
 
 from kivy.uix.boxlayout import BoxLayout
 from kivymd.app import MDApp
@@ -13,6 +14,7 @@ from kivy.base import EventLoop
 from kivymd.icon_definitions import md_icons
 from kivymd.uix.dialog import MDDialog
 from kivymd.uix.menu import MDDropdownMenu
+
 KV = """
 WindowManager:
     HomeScreen:

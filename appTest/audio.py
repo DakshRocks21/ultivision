@@ -1,3 +1,5 @@
+#$# Written by Daksh #$#
+
 from playsound import playsound
 import os, time
 

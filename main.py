@@ -13,7 +13,7 @@ check_if_config_exists()
 
 #import appTest.audio as audio
 # test all the sound effects
-#audio.test()
+ audio.test()
 
 #import appTest.kivy_settings as kivy_settings
 # test UI quicker

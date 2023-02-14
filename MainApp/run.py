@@ -1,5 +1,5 @@
 
-## / KIVY IMPORTS /##
+##/ KIVY IMPORTS /##
 from kivy.uix.boxlayout import BoxLayout
 from kivymd.app import MDApp
 from kivymd.uix.label import MDLabel
@@ -15,7 +15,7 @@ from kivymd.icon_definitions import md_icons
 from kivymd.uix.dialog import MDDialog
 from kivymd.uix.menu import MDDropdownMenu
 
-## / TTS IMPORTS /##
+##/ TTS IMPORTS /##
 from playsound import playsound
 
 ##/ UTILS IMPORTS /##
@@ -29,7 +29,7 @@ from object_detection.utils import visualization_utils as viz_utils
 from object_detection.builders import model_builder
 from object_detection.utils import config_util
 
-## / OTHER IMPORTS /##
+##/ OTHER IMPORTS /##
 import cv2
 import numpy as np
 import time
@@ -39,8 +39,7 @@ from queue import Queue
 import matplotlib.pyplot as plt
 import io
 
-## / KIVY UI /##
-
+##/ KIVY UI /##
 KV = """
 WindowManager:
     HomeScreen:
@@ -152,8 +151,10 @@ class WindowManager(ScreenManager):
     pass
 
 
+##/ MainApp (KIVY) /##
 class MainApp(MDApp):
 
+    ### Kivy Build/Start/Stop Functions ###
     def build(self):        
         self.tensorflowThread = Thread(target=tensorflow, args=(inputQ, outputQ))
         self.tensorflowThread.start()
@@ -169,30 +170,42 @@ class MainApp(MDApp):
         
         return Builder.load_string(KV)
 
-    def get_labels(self):
-        self.category_index = label_map_util.create_category_index_from_labelmap(LABELMAP_FILENAME_PATH, use_display_name=True)
-        for key, value in self.category_index.items():
-            labels.append(value["name"].lower())
-    
-    def goBackToCamera(self):
-        self.oncam = True
-        self.startcam()
-        self.root.transition = SlideTransition(direction="right")
-        self.root.current = 'camera'
-
-    def on_switch_active(self, switch, value):
-        if value:
-            change_config(1, "blind_mode")
-        else:
-            change_config(0, "blind_mode")
-
     def on_start(self):
+        """
+        Kivy function
+        Check if the app is in blind mode, if so, switch to camera screen
+        """
         if self.json_config['blind_mode'] == 1:
             self.root.get_screen("settings").ids.switch.active = True
             # switch to camera screen
             self.startcam()
+    
+    def on_stop(self):
+        """
+        Kivy function
+        Stop the camera and the tensorflow thread when then app is closed
+        """
+        stop_threads = True
+        self.tensorflowThread.join(timeout=1)
+        if self.oncam:
+            self.stopcam(0)
 
+    ### Misc Functions ###
+    def get_labels(self):
+        """
+        Get the labels from the labelmap file
+        - to be used for the sound map
+        """
+        self.category_index = label_map_util.create_category_index_from_labelmap(LABELMAP_FILENAME_PATH, use_display_name=True)
+        for key, value in self.category_index.items():
+            labels.append(value["name"].lower())
+ 
+ 
+    ### SETTINGS SCREEN ###
     def open_settings(self):
+        """
+        Open the settings screen, stop the camera, remove the Image() and create the dropdown menu
+        """
         self.root.transition = SlideTransition(direction="left")
         self.root.current = 'settings'
         self.stopcam(False)
@@ -212,13 +225,19 @@ class MainApp(MDApp):
                 cap.release()
 
         self.dropdown1 = MDDropdownMenu(items=menu_items, width_mult=4, caller=self.root.get_screen("settings").ids.button) 
-    
+       
     def selectCamera(self, i):
+        """
+        Select the camera that was passed in
+        """
         print("Camera " + str(i) + " selected")
         self.CAMERA = int(i)
         self.dropdown1.dismiss()
 
     def changeText(self, word):
+        """
+        Change the text on the settings screen to the word that was passed in
+        """
         text = self.root.get_screen("settings").ids.MyCoolID.text 
         if text == "You selected " + word:
             self.startcam()
@@ -226,16 +245,27 @@ class MainApp(MDApp):
             self.root.current = 'camera'
         else:
             self.root.get_screen("settings").ids.MyCoolID.text = "You selected " + word
-        
+    
+    def on_switch_active(self, switch, value):
+        """
+        Switch between blind mode and normal mode
+        """
+        if value:
+            change_config(1, "blind_mode")
+        else:
+            change_config(0, "blind_mode")
 
-    def on_stop(self):
-        stop_threads = True
-        self.tensorflowThread.join(timeout=1)
-        if self.oncam:
-            self.stopcam(0)
 
 
+    ### CAMERA FUNCTIONS ###
     def startcam(self):
+        """
+        Start the camera and display the video on the screen
+        1. Transition to the loading screen
+        2. Start the camera
+        3. Schedule the loadVideo function to run every 1/30 seconds
+        4. Transition to the camera screen
+        """
         self.root.transition = SlideTransition(direction="right")
         self.root.current = 'loading'
         self.capture = cv2.VideoCapture(int(self.CAMERA))
@@ -244,8 +274,26 @@ class MainApp(MDApp):
         Clock.schedule_interval(self.loadVideo, 1.0/30.0)
         self.root.transition = SlideTransition(direction="left")
         self.root.current = 'camera'
+
+    def stopcam(self, condition):
+        """
+        Stop the camera and remove the image widget from the screen
+        if condition is true, then it will go back to the home screen
+        """
+        self.oncam = False
+        self.capture.release()
+        self.root.get_screen('camera').ids.layout.remove_widget(self.image)
+        if condition:
+            self.root.transition = SlideTransition(direction="right")
+            self.root.current = 'home'
     
+
+
+    ### VIDEO RENDERING FUNCTIONS ###
     def loadVideo(self, dt):
+        """
+        Load the video from the camera and display it on the screen
+        """
         if self.oncam and self.capture.isOpened():
             ret, frame = self.capture.read()
             if ret:
@@ -257,15 +305,8 @@ class MainApp(MDApp):
                 self.image.texture = texture
                 inputQ.task_done()
 
-    def stopcam(self, condition):
-        self.oncam = False
-        self.capture.release()
-        self.root.get_screen('camera').ids.layout.remove_widget(self.image)
-        if condition:
-            self.root.transition = SlideTransition(direction="right")
-            self.root.current = 'home'
 
-
+##/  TENSORFLOW FUNCTIONS /##
 def tensorflow(output, input1):
     json_config = load_config()
     configs = config_util.get_configs_from_pipeline_file(f"{DATA_PATH}/{json_config['model_name']}/pipeline.config")
@@ -322,7 +363,7 @@ def tensorflow(output, input1):
 
         output.put(image_np_with_detections)
 
-
+##/  Start App /##
 def launchApp():
     global stop_threads
     global labels

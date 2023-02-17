@@ -117,17 +117,23 @@ WindowManager:
         MDLabel:
             text: 'Camera Page'
             font_style: 'H4'
+            halign: 'center'
             pos_hint: {"center_x": 0.5, "center_y": 0.9}
+            size_hint: 0.8, 0.1
         BoxLayout:
             id: layout
+            pos_hint: {"center_x": 0.5, "center_y": 0.5}
+            size_hint: 0.8, 0.8
         MDFlatButton:
             text: 'Settings'
-            pos_hint: {"center_x": 0.3, "center_y": 0.1}
+            pos_hint: {"center_x": 0.30, "center_y": 0.1}
+            size_hint: 0.3, 0.1
             md_bg_color: app.theme_cls.primary_light
             on_press: app.open_settings()
         MDFlatButton:
             text: 'Exit'
-            pos_hint: {"center_x": 0.7, "center_y": 0.1}
+            pos_hint: {"center_x": 0.70, "center_y": 0.1}
+            size_hint: 0.3, 0.1
             md_bg_color: app.theme_cls.primary_light
             on_press: app.stopcam(True)
 """
@@ -200,6 +206,8 @@ class MainApp(MDApp):
         self.category_index = label_map_util.create_category_index_from_labelmap(LABELMAP_FILENAME_PATH, use_display_name=True)
         for key, value in self.category_index.items():
             labels.append(value["name"].lower())
+    
+    
  
  
     ### SETTINGS SCREEN ###

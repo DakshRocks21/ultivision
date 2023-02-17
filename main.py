@@ -11,7 +11,7 @@ check_if_config_exists()
 
 # download model
 from MainApp.utils.model import download_model
-download_model()
+# download_model()
 
 #import appTest.audio as audio
 # test all the sound effects

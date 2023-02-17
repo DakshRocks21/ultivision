@@ -32,12 +32,9 @@ from object_detection.utils import config_util
 ##/ OTHER IMPORTS /##
 import cv2
 import numpy as np
-import time
-import os
-from threading import Thread
+import threading
 from queue import Queue
-import matplotlib.pyplot as plt
-import io
+import sys
 
 ##/ KIVY UI /##
 #$# Written by Daksh and Richard #$#
@@ -163,8 +160,9 @@ class MainApp(MDApp):
 
     ### Kivy Build/Start/Stop Functions ###
     def build(self):        
-        self.tensorflowThread = Thread(target=tensorflow, args=(inputQ, outputQ))
+        self.tensorflowThread = threading.Thread(target=tensorflow, args=(inputQ, outputQ))
         self.tensorflowThread.start()
+
 
         self.image = Image()
         self.get_labels()
@@ -193,9 +191,15 @@ class MainApp(MDApp):
         Stop the camera and the tensorflow thread when then app is closed
         """
         stop_threads = True
-        self.tensorflowThread.join(timeout=1)
+
+        exit_event.set()
+
         if self.oncam:
             self.stopcam(0)
+        
+        self.tensorflowThread.join()
+        # TODO : 
+
 
     ### Misc Functions ###
     def get_labels(self):
@@ -250,8 +254,6 @@ class MainApp(MDApp):
         text = self.root.get_screen("settings").ids.MyCoolID.text 
         if text == "You selected " + word:
             self.startcam()
-            self.root.transition = SlideTransition(direction="right")
-            self.root.current = 'camera'
         else:
             self.root.get_screen("settings").ids.MyCoolID.text = "You selected " + word
     
@@ -290,6 +292,8 @@ class MainApp(MDApp):
         if condition is true, then it will go back to the home screen
         """
         self.oncam = False
+        Clock.unschedule(self.loadVideo)
+        inputQ.put(None)
         self.capture.release()
         self.root.get_screen('camera').ids.layout.remove_widget(self.image)
         if condition:
@@ -335,6 +339,9 @@ def tensorflow(output, input1):
     
     while not stop_threads: 
         frame = input1.get()
+        if exit_event.is_set():
+            return
+
         image_np = np.array(frame)
         
         input_tensor = tf.convert_to_tensor(np.expand_dims(image_np, 0), dtype=tf.float32)
@@ -376,20 +383,24 @@ def tensorflow(output, input1):
 ##/  Start App /##
 #$# Written by Daksh #$#
 def launchApp():
-    global stop_threads
-    global labels
-    global min_score_thresh
-    global blind_mode
-    
-    configs = load_config()
 
+    global exit_event
+    exit_event = threading.Event()
+
+    global blind_mode
+    configs = load_config()
     if configs['blind_mode'] == 1:
         blind_mode = True
     else:
         blind_mode = False
 
+    global min_score_thresh
     min_score_thresh = 0.5
+    
+    global stop_threads
     stop_threads = False
+    
+    global labels
     labels = []
 
     global inputQ, outputQ

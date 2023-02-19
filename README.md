@@ -18,7 +18,9 @@ pip install -r requirements.txt #for output
 
 ## Usage
 
-> :warning: We **strongly recommend** using a virtual environment to run this project and run it on a `screen:onex,portrait`.
+> :warning: You need to use a virtual environment to run this project.
+
+name your virtual environment `coursework-test` and run `source venv/bin/activate` to activate it.
 
 Simulate a medium-density screen such as Motorola Droid 2: `python main.py -m screen:droid2`
 

@@ -41,7 +41,6 @@ import sys
 KV = """
 WindowManager:
     HomeScreen:
-    LoadingScreen:
     SettingsScreen:
     CameraScreen:
 
@@ -50,25 +49,17 @@ WindowManager:
     MDScreen:
         orientation: 'vertical'
         MDLabel:
+            id: header
             text: 'Welcome to Our App!'
             font_style: 'H4' 
             halign: 'center'
         MDFlatButton:
+            id: start_button
             text: 'Start'
             md_bg_color: app.theme_cls.primary_light
             font_style: 'Subtitle1' 
             pos_hint: {"center_x": 0.5, "center_y": 0.1}
             on_press: app.startcam()
-
-<LoadingScreen>:
-    name: 'loading'
-    MDScreen:
-        orientation: 'vertical'
-        MDLabel:
-            text: 'Loading...'
-            font_style: 'H4'
-            halign: 'center'
-
 <SettingsScreen>:
     name: 'settings'
     MDScreen:
@@ -210,9 +201,6 @@ class MainApp(MDApp):
         self.category_index = label_map_util.create_category_index_from_labelmap(LABELMAP_FILENAME_PATH, use_display_name=True)
         for key, value in self.category_index.items():
             labels.append(value["name"].lower())
-    
-    
- 
  
     ### SETTINGS SCREEN ###
     def open_settings(self):
@@ -277,8 +265,9 @@ class MainApp(MDApp):
         3. Schedule the loadVideo function to run every 1/30 seconds
         4. Transition to the camera screen
         """
-        self.root.transition = SlideTransition(direction="right")
-        self.root.current = 'loading'
+        self.root.get_screen('home').ids.header.text = "Loading..."
+        # hide the start button
+        self.root.get_screen('home').ids.start_button.opacity = 0
         self.capture = cv2.VideoCapture(int(self.CAMERA))
         self.oncam = True
         self.root.get_screen('camera').ids.layout.add_widget(self.image)
@@ -299,6 +288,8 @@ class MainApp(MDApp):
         if condition:
             self.root.transition = SlideTransition(direction="right")
             self.root.current = 'home'
+            self.root.get_screen('home').ids.header.text = "Welcome to our app!"
+            self.root.get_screen('home').ids.start_button.opacity = 100
     
 
 

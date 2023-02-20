@@ -1,50 +1,50 @@
+from object_detection.utils import config_util
+from object_detection.builders import model_builder
+from object_detection.utils import visualization_utils as viz_utils
+from object_detection.utils import label_map_util
+import tensorflow as tf
+from MainApp.utils.constants import LABELMAP_FILENAME, DATA_PATH, LABELMAP_FILENAME_PATH, CASE
+from MainApp.utils.config import load_config, change_config
+from playsound import playsound
+from kivymd.uix.menu import MDDropdownMenu
+from kivymd.uix.dialog import MDDialog
+from kivymd.icon_definitions import md_icons
+from kivy.base import EventLoop
+from kivy.graphics.texture import Texture
+from kivy.uix.screenmanager import NoTransition, SlideTransition
+from kivy.clock import Clock
+from kivy.uix.image import Image, CoreImage
+from kivy.uix.screenmanager import ScreenManager, Screen
+from kivy.lang import Builder
+from kivymd.uix.button import MDFlatButton, MDRaisedButton, MDTextButton
+from kivymd.uix.label import MDLabel
+from kivymd.app import MDApp
+from kivy.uix.boxlayout import BoxLayout
+from kivy.config import Config
+import sys
+from queue import Queue
+import threading
+import numpy as np
+import cv2
 import warnings
 warnings.filterwarnings("ignore")
-##/ MISC IMPORTS /##
-import cv2
-import numpy as np
-import threading
-from queue import Queue
-import sys
+## / MISC IMPORTS /##
 
-##/ KIVY IMPORTS /##
-from kivy.config import Config
+## / KIVY IMPORTS /##
 Config.set('graphics', 'width', '1000')
 Config.set('graphics', 'height', '1000')
 Config.set('graphics', 'minimum_width', '800')
 Config.set('graphics', 'minimum_height', '800')
 
-from kivy.uix.boxlayout import BoxLayout
-from kivymd.app import MDApp
-from kivymd.uix.label import MDLabel
-from kivymd.uix.button import MDFlatButton, MDRaisedButton, MDTextButton
-from kivy.lang import Builder
-from kivy.uix.screenmanager import ScreenManager, Screen
-from kivy.uix.image import Image, CoreImage
-from kivy.clock import Clock
-from kivy.uix.screenmanager import NoTransition, SlideTransition
-from kivy.graphics.texture import Texture
-from kivy.base import EventLoop
-from kivymd.icon_definitions import md_icons
-from kivymd.uix.dialog import MDDialog
-from kivymd.uix.menu import MDDropdownMenu
 
-##/ TTS IMPORTS /##
-from playsound import playsound
+## / TTS IMPORTS /##
 
-##/ UTILS IMPORTS /##
-from MainApp.utils.config import load_config, change_config
-from MainApp.utils.constants import LABELMAP_FILENAME, DATA_PATH, LABELMAP_FILENAME_PATH, CASE
+## / UTILS IMPORTS /##
 
-##/ TENSOFLOW IMPORTS /##
-import tensorflow as tf
-from object_detection.utils import label_map_util
-from object_detection.utils import visualization_utils as viz_utils
-from object_detection.builders import model_builder
-from object_detection.utils import config_util
+## / TENSOFLOW IMPORTS /##
 
-##/ KIVY UI /##
-#$# Written by Daksh and Richard #$#
+## / KIVY UI /##
+# $# Written by Daksh and Richard #$#
 KV = """
 WindowManager:
     HomeScreen:
@@ -147,7 +147,7 @@ WindowManager:
         MDTextField:
             id: textfield
             hint_text: "Enter the confidence threshold"
-            helper_text: "Enter a value between 0 and 1"
+            helper_text: "Enter a value between 0 and 1 (default is 0.5)"
             helper_text_mode: "on_focus"
             pos_hint: {'center_x': 0.7, 'center_y': .5}
             icon_right: "numeric"
@@ -201,12 +201,16 @@ WindowManager:
             on_press: app.stopcam(True)
 """
 
-#$# Written by Daksh #$#
+# $# Written by Daksh #$#
+
+
 class HomeScreen(Screen):
     pass
 
+
 class LoadingScreen(Screen):
     pass
+
 
 class SettingsScreen(Screen):
     pass
@@ -220,14 +224,17 @@ class WindowManager(ScreenManager):
     pass
 
 
-##/ MainApp (KIVY) /##
-#$# Written by Daksh #$#
+## / MainApp (KIVY) /##
+# $# Written by Daksh #$#
 class MainApp(MDApp):
 
     ### Kivy Build/Start/Stop Functions ###
-    def build(self):        
-        self.tensorflowThread = threading.Thread(target=tensorflow, args=(inputQ, outputQ))
+    def build(self):
+        self.tensorflowThread = threading.Thread(
+            target=tensorflow, args=(inputQ, outputQ))
         self.tensorflowThread.start()
+        self.title = "DakshVision"
+        # self.icon = "icon.png"
         self.image = Image()
         self.get_labels()
         self.json_config = load_config()
@@ -236,7 +243,7 @@ class MainApp(MDApp):
         self.theme_cls.primary_hue = self.json_config['theme']['hue']
         self.CAMERA = self.json_config['camera']['number']
         self.oncam = False
-        
+
         return Builder.load_string(KV)
 
     def on_start(self):
@@ -247,26 +254,26 @@ class MainApp(MDApp):
         if self.json_config['isOnboardingCompleted'] == 0:
             self.root.current = "settings"
             change_config(1, "isOnboardingCompleted")
-            self.root.get_screen("settings").ids.backToCameraBtn.text = "Go to Camera"
+            self.root.get_screen(
+                "settings").ids.backToCameraBtn.text = "Go to Camera"
 
         elif self.json_config['blind_mode'] == 1:
             self.root.get_screen("settings").ids.switch.active = True
             # switch to camera screen
             self.startcam()
 
-        self.root.get_screen("settings").ids.textfield.text = str(self.json_config['confidence_threshold'])
-    
+        self.root.get_screen("settings").ids.textfield.text = str(
+            self.json_config['confidence_threshold'])
+
     def on_stop(self):
         """
         Kivy function
         Stop the camera and the tensorflow thread when then app is closed
         """
-        stop_threads = True
-        exit_event.set()
+        outputQ.put("abort")
         if self.oncam:
             self.stopcam(0)
         self.tensorflowThread.join()
-        # TODO : 
 
     ### Misc Functions ###
     def get_labels(self):
@@ -274,7 +281,8 @@ class MainApp(MDApp):
         Get the labels from the labelmap file
         - to be used for the sound map
         """
-        self.category_index = label_map_util.create_category_index_from_labelmap(LABELMAP_FILENAME_PATH, use_display_name=True)
+        self.category_index = label_map_util.create_category_index_from_labelmap(
+            LABELMAP_FILENAME_PATH, use_display_name=True)
         for key, value in self.category_index.items():
             labels.append(value["name"].lower())
 
@@ -286,13 +294,14 @@ class MainApp(MDApp):
             playsound(f"{DATA_PATH}/sound/{name}.mp3")
         except:
             pass
- 
+
     ### SETTINGS SCREEN ###
     def open_settings(self):
         """
         Open the settings screen, stop the camera, remove the Image() and create the dropdown menu
         """
-        self.root.get_screen("settings").ids.backToCameraBtn.text = "Back to Camera"
+        self.root.get_screen(
+            "settings").ids.backToCameraBtn.text = "Back to Camera"
         self.root.transition = SlideTransition(direction="left")
         self.root.current = 'settings'
         # remove the loadvideo clock
@@ -312,8 +321,9 @@ class MainApp(MDApp):
                 })
                 cap.release()
 
-        self.dropdown1 = MDDropdownMenu(items=menu_items, width_mult=4, caller=self.root.get_screen("settings").ids.button) 
-       
+        self.dropdown1 = MDDropdownMenu(
+            items=menu_items, width_mult=4, caller=self.root.get_screen("settings").ids.button)
+
     def selectCamera(self, i):
         """
         Select the camera that was passed in
@@ -321,7 +331,7 @@ class MainApp(MDApp):
         print("Camera " + str(i) + " selected")
         self.CAMERA = int(i)
         self.dropdown1.dismiss()
-    
+
     def on_switch_active(self, switch, value):
         """
         Switch between blind mode and normal mode
@@ -335,14 +345,12 @@ class MainApp(MDApp):
         """
         Change the confidence threshold
         """
-        if 0 <= float(textfield.text) and float(textfield.text) <= 1:                
+        if 0 <= float(textfield.text) and float(textfield.text) <= 1:
             min_score_thresh = float(textfield.text)
             change_config(textfield.text, "confidence_threshold")
         else:
             # show textfield error
             textfield.error = True
-
-
 
     ### CAMERA FUNCTIONS ###
     def startcam(self):
@@ -371,18 +379,17 @@ class MainApp(MDApp):
         """
         self.oncam = False
         Clock.unschedule(self.loadVideo)
-        inputQ.put(None)
         self.capture.release()
         self.root.get_screen('camera').ids.layout.remove_widget(self.image)
         if condition:
             self.root.transition = SlideTransition(direction="right")
             self.root.current = 'home'
-            self.root.get_screen('home').ids.header.text = "Welcome to our app!"
+            self.root.get_screen(
+                'home').ids.header.text = "Welcome to our app!"
             self.root.get_screen('home').ids.start_button.opacity = 100
-    
-
 
     ### VIDEO RENDERING FUNCTIONS ###
+
     def loadVideo(self, dt):
         """
         Load the video from the camera and display it on the screen
@@ -396,23 +403,27 @@ class MainApp(MDApp):
                     return
                 else:
                     buf = cv2.flip(new_frame, 0).tostring()
-                    texture = Texture.create(size=(new_frame.shape[1], new_frame.shape[0]), colorfmt='bgr') 
+                    texture = Texture.create(
+                        size=(new_frame.shape[1], new_frame.shape[0]), colorfmt='bgr')
                     texture.blit_buffer(buf, colorfmt='bgr', bufferfmt='ubyte')
                     self.image.texture = texture
                     inputQ.task_done()
 
 
-##/  TENSORFLOW FUNCTIONS /##
-#$# Written by Daksh #$#
+## /  TENSORFLOW FUNCTIONS /##
+# $# Written by Daksh #$#
 def tensorflow(output, input1):
     """
     Tensorflow function
     """
     json_config = load_config()
-    configs = config_util.get_configs_from_pipeline_file(f"{DATA_PATH}/{json_config['model_name']}/pipeline.config")
-    detection_model = model_builder.build(model_config=configs['model'], is_training=False)
+    configs = config_util.get_configs_from_pipeline_file(
+        f"{DATA_PATH}/{json_config['model_name']}/pipeline.config")
+    detection_model = model_builder.build(
+        model_config=configs['model'], is_training=False)
     ckpt = tf.compat.v2.train.Checkpoint(model=detection_model)
-    ckpt.restore(f"{DATA_PATH}/{json_config['model_name']}/ckpt-{json_config['largest_checkpoint_num'] }").expect_partial()
+    ckpt.restore(
+        f"{DATA_PATH}/{json_config['model_name']}/ckpt-{json_config['largest_checkpoint_num'] }").expect_partial()
 
     @tf.function
     def detect_fn(image):
@@ -421,58 +432,58 @@ def tensorflow(output, input1):
         detections = detection_model.postprocess(prediction_dict, shapes)
         return detections
 
-    category_index = label_map_util.create_category_index_from_labelmap(LABELMAP_FILENAME_PATH)
-    
-    while not stop_threads: # while the threads are not stopped
+    category_index = label_map_util.create_category_index_from_labelmap(
+        LABELMAP_FILENAME_PATH)
+    while True:  # while the threads are not stopped
         frame = input1.get()
-        if frame is None:
-            input1.task_done()
-            outputQ.put(None)
-        else:
+        if frame == "abort":
+            return
+        if frame is not None:
             image_np = np.array(frame)
-            
-            input_tensor = tf.convert_to_tensor(np.expand_dims(image_np, 0), dtype=tf.float32)
+
+            input_tensor = tf.convert_to_tensor(
+                np.expand_dims(image_np, 0), dtype=tf.float32)
             detections = detect_fn(input_tensor)
-            
+
             num_detections = int(detections.pop('num_detections'))
             detections = {key: value[0, :num_detections].numpy()
-                        for key, value in detections.items()}
+                          for key, value in detections.items()}
             detections['num_detections'] = num_detections
 
-            detections['detection_classes'] = detections['detection_classes'].astype(np.int64)
+            detections['detection_classes'] = detections['detection_classes'].astype(
+                np.int64)
 
             label_id_offset = 1
             image_np_with_detections = image_np.copy()
 
             viz_utils.visualize_boxes_and_labels_on_image_array(
-                        image_np_with_detections,
-                        detections['detection_boxes'],
-                        detections['detection_classes']+label_id_offset,
-                        detections['detection_scores'],
-                        category_index,
-                        use_normalized_coordinates=True,
-                        max_boxes_to_draw=10,
-                        min_score_thresh=float(min_score_thresh),
-                        agnostic_mode=False)
-
+                image_np_with_detections,
+                detections['detection_boxes'],
+                detections['detection_classes']+label_id_offset,
+                detections['detection_scores'],
+                category_index,
+                use_normalized_coordinates=True,
+                max_boxes_to_draw=10,
+                min_score_thresh=float(min_score_thresh),
+                agnostic_mode=False)
 
             highest_prob = detections['detection_scores'][0]
             if highest_prob > float(min_score_thresh):
                 object = detections['detection_classes'][0]
                 try:
-                    playsound(f"{DATA_PATH}/sound/{labels[object]}.mp3" , block=False)
+                    playsound(
+                        f"{DATA_PATH}/sound/{labels[object]}.mp3", block=False)
                 except:
                     pass
             input1.task_done()
 
-            output.put(image_np_with_detections) 
+            output.put(image_np_with_detections)
 
-##/  Start App /##
-#$# Written by Daksh #$#
+## /  Start App /##
+# $# Written by Daksh #$#
+
+
 def launchApp():
-
-    global exit_event
-    exit_event = threading.Event()
 
     global blind_mode
     configs = load_config()
@@ -483,10 +494,10 @@ def launchApp():
 
     global min_score_thresh
     min_score_thresh = configs['confidence_threshold']
-    
+
     global stop_threads
     stop_threads = False
-    
+
     global labels
     labels = []
 
@@ -496,4 +507,3 @@ def launchApp():
     # hide all tensorflow errors
 
     MainApp().run()
-    

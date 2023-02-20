@@ -10,7 +10,11 @@ def download_dependencies():
     print("Seting up the environment and installing dependencies...")
     print()
     os.system("brew install portaudio")
-    os.system("pip3 install -r requirements.txt")
+    os.system("brew install protobuf")
+    os.system("pip3 install -q -r requirements.txt")
+    
+    from MainApp.utils.model import download_model
+    download_model()
     
     # Clone TensorFlow Model Garden if it has not been cloned yet
     if not os.path.exists(MODEL_GARDEN_PATH):

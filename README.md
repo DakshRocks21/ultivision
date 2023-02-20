@@ -9,7 +9,12 @@
 
 ## Requirements
 
-`Install protobuf-compiler for Ubuntu and protobuf for macOS first!!`
+- Install HomeBrew
+- Install protobuf with `brew install protobuf` *download_dependencies function installs this*
+- Install portaudio with `brew install portaudio` *download_dependencies function installs this*
+- Python Version : `3.10.9`
+- MacOS Version `> 13.0.0`
+- Use a Intel Mac
 
 ```py
 pip install -q -r requirements.txt #for no output

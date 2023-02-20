@@ -1,3 +1,11 @@
+import warnings
+warnings.filterwarnings("ignore")
+##/ MISC IMPORTS /##
+import cv2
+import numpy as np
+import threading
+from queue import Queue
+import sys
 
 ##/ KIVY IMPORTS /##
 from kivy.config import Config
@@ -21,7 +29,6 @@ from kivymd.icon_definitions import md_icons
 from kivymd.uix.dialog import MDDialog
 from kivymd.uix.menu import MDDropdownMenu
 
-
 ##/ TTS IMPORTS /##
 from playsound import playsound
 
@@ -36,17 +43,8 @@ from object_detection.utils import visualization_utils as viz_utils
 from object_detection.builders import model_builder
 from object_detection.utils import config_util
 
-##/ OTHER IMPORTS /##
-import cv2
-import numpy as np
-import threading
-from queue import Queue
-import sys
-
 ##/ KIVY UI /##
 #$# Written by Daksh and Richard #$#
-
-
 KV = """
 WindowManager:
     HomeScreen:
@@ -131,14 +129,8 @@ WindowManager:
             size_hint: 0.30, 0.075
             md_bg_color: app.theme_cls.primary_light
             on_press: app.playAudio('truck')
-        MDFlatButton:
-            text: 'Back to Settings'
-            pos_hint: {"center_x": 0.70, "center_y": 0.2}
-            size_hint: 0.30, 0.1
-            md_bg_color: app.theme_cls.primary_light
-            on_press: app.settingToCam()
         MDLabel:
-            text: "Blind Mode"
+            text: "Quick Launch"
             pos_hint: {"center_x": 0.7, "center_y": 0.70}
             font_style: 'H6'
             halign: 'center'
@@ -151,13 +143,35 @@ WindowManager:
             id: switch
             pos_hint: {'center_x': 0.7, 'center_y': .6}
             on_active: app.on_switch_active(*args)
+        
+        MDTextField:
+            id: textfield
+            hint_text: "Enter the confidence threshold"
+            helper_text: "Enter a value between 0 and 1"
+            helper_text_mode: "on_focus"
+            pos_hint: {'center_x': 0.7, 'center_y': .5}
+            icon_right: "numeric"
+            size_hint: 0.3, 0.075
+            icon_right_color: app.theme_cls.primary_color
+            input_filter: 'float'
+            multiline: False
+            on_text_validate: app.on_textfield_enter(*args)
+
         MDRectangleFlatIconButton:
             id: button
             text: "Camera Switcher"
-            icon: "language-python"
+            icon: "camera"
             pos_hint: {"center_x": 0.7, "center_y": .4}
             size_hint: 0.30, 0.1
             on_release: app.dropdown1.open()
+        MDFlatButton:
+            id: backToCameraBtn
+            text: 'Back to Camera'
+            pos_hint: {"center_x": 0.70, "center_y": 0.2}
+            size_hint: 0.30, 0.1
+            md_bg_color: app.theme_cls.primary_light
+            on_press: app.startcam()
+
 
 <CameraScreen>:
     name: 'camera'
@@ -214,8 +228,6 @@ class MainApp(MDApp):
     def build(self):        
         self.tensorflowThread = threading.Thread(target=tensorflow, args=(inputQ, outputQ))
         self.tensorflowThread.start()
-
-
         self.image = Image()
         self.get_labels()
         self.json_config = load_config()
@@ -232,10 +244,17 @@ class MainApp(MDApp):
         Kivy function
         Check if the app is in blind mode, if so, switch to camera screen
         """
-        if self.json_config['blind_mode'] == 1:
+        if self.json_config['isOnboardingCompleted'] == 0:
+            self.root.current = "settings"
+            change_config(1, "isOnboardingCompleted")
+            self.root.get_screen("settings").ids.backToCameraBtn.text = "Go to Camera"
+
+        elif self.json_config['blind_mode'] == 1:
             self.root.get_screen("settings").ids.switch.active = True
             # switch to camera screen
             self.startcam()
+
+        self.root.get_screen("settings").ids.textfield.text = str(self.json_config['confidence_threshold'])
     
     def on_stop(self):
         """
@@ -243,15 +262,11 @@ class MainApp(MDApp):
         Stop the camera and the tensorflow thread when then app is closed
         """
         stop_threads = True
-
         exit_event.set()
-
         if self.oncam:
             self.stopcam(0)
-        
         self.tensorflowThread.join()
         # TODO : 
-
 
     ### Misc Functions ###
     def get_labels(self):
@@ -277,6 +292,7 @@ class MainApp(MDApp):
         """
         Open the settings screen, stop the camera, remove the Image() and create the dropdown menu
         """
+        self.root.get_screen("settings").ids.backToCameraBtn.text = "Back to Camera"
         self.root.transition = SlideTransition(direction="left")
         self.root.current = 'settings'
         # remove the loadvideo clock
@@ -305,9 +321,6 @@ class MainApp(MDApp):
         print("Camera " + str(i) + " selected")
         self.CAMERA = int(i)
         self.dropdown1.dismiss()
-
-    def settingToCam(self):
-        self.startcam()
     
     def on_switch_active(self, switch, value):
         """
@@ -317,6 +330,17 @@ class MainApp(MDApp):
             change_config(1, "blind_mode")
         else:
             change_config(0, "blind_mode")
+
+    def on_textfield_enter(self, textfield):
+        """
+        Change the confidence threshold
+        """
+        if 0 <= float(textfield.text) and float(textfield.text) <= 1:                
+            min_score_thresh = float(textfield.text)
+            change_config(textfield.text, "confidence_threshold")
+        else:
+            # show textfield error
+            textfield.error = True
 
 
 
@@ -381,6 +405,9 @@ class MainApp(MDApp):
 ##/  TENSORFLOW FUNCTIONS /##
 #$# Written by Daksh #$#
 def tensorflow(output, input1):
+    """
+    Tensorflow function
+    """
     json_config = load_config()
     configs = config_util.get_configs_from_pipeline_file(f"{DATA_PATH}/{json_config['model_name']}/pipeline.config")
     detection_model = model_builder.build(model_config=configs['model'], is_training=False)
@@ -396,7 +423,7 @@ def tensorflow(output, input1):
 
     category_index = label_map_util.create_category_index_from_labelmap(LABELMAP_FILENAME_PATH)
     
-    while not stop_threads: 
+    while not stop_threads: # while the threads are not stopped
         frame = input1.get()
         if frame is None:
             input1.task_done()
@@ -425,12 +452,12 @@ def tensorflow(output, input1):
                         category_index,
                         use_normalized_coordinates=True,
                         max_boxes_to_draw=10,
-                        min_score_thresh=min_score_thresh,
+                        min_score_thresh=float(min_score_thresh),
                         agnostic_mode=False)
 
 
             highest_prob = detections['detection_scores'][0]
-            if highest_prob > min_score_thresh:
+            if highest_prob > float(min_score_thresh):
                 object = detections['detection_classes'][0]
                 try:
                     playsound(f"{DATA_PATH}/sound/{labels[object]}.mp3" , block=False)
@@ -455,7 +482,7 @@ def launchApp():
         blind_mode = False
 
     global min_score_thresh
-    min_score_thresh = 0.5
+    min_score_thresh = configs['confidence_threshold']
     
     global stop_threads
     stop_threads = False

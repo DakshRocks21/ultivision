@@ -16,7 +16,8 @@ def create_config():
         "settings" : {"mode": 1},
         "largest_checkpoint_num" : "",
         "model_name" : "",
-        "blind_mode" : 0
+        "blind_mode" : 0,
+        "confidence_threshold" : 0.8,
     }
     with open(CONFIG_PATH, "w") as f:
         json.dump(config, f)

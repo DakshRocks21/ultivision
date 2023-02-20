@@ -1,1 +1,1 @@
-{"isOnboardingCompleted": false, "tts": {"rate": 150, "volume": 1}, "camera": {"number": 0}, "theme": {"style": "Light", "palette": "Orange", "hue": "300"}, "settings": {"mode": 1}, "largest_checkpoint_num": 57, "model_name": "b4", "blind_mode": 0}
+{"isOnboardingCompleted": 1, "tts": {"rate": 150, "volume": 1}, "camera": {"number": 0}, "theme": {"style": "Light", "palette": "Orange", "hue": "300"}, "settings": {"mode": 1}, "largest_checkpoint_num": "57", "model_name": "b4", "blind_mode": 0, "confidence_threshold": 0.8}

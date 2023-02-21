@@ -10,8 +10,8 @@
 ## Requirements
 
 - Install HomeBrew : `/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"`
-- Install protobuf with `brew install protobuf` *download_dependencies function installs this*
-- Install portaudio with `brew install portaudio` *download_dependencies function installs this*
+- Install protobuf with `brew install protobuf`
+- Install portaudio with `brew install portaudio` 
 - Python Version : `3.10.9`
 - MacOS Version `> 12.6.0`
 - Use a Intel Mac

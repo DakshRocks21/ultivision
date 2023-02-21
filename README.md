@@ -1,14 +1,13 @@
 # Computing Coursework 2023 : Group K
 DakshVision is a project created by Daksh Thapar, Tan Xuan Han and Richard Tan (Group Leader).
 
-It was made with the intent to help people with visual impairments to integrate with the world around them more conveniently. It plays audio based on the objects detected, allowing vis
+It was made with the intent to help people with visual impairments to integrate with the world around them more conveniently. It plays audio based on the objects detected, allowing the visually impaired to understand their environments better, and move around easier.
 
 ## Group Members
 
-- Daksh Thapar
-- Richard Tan
-- Tan Xuan Han
-
+- Daksh Thapar (S4-01)
+- Richard Tan (S4-07)
+- Tan Xuan Han (S4-08)
 
 ## Requirements
 

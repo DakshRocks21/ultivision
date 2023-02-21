@@ -11,7 +11,7 @@ os.system("clear")
 check_if_config_exists()
 
 # download dependencies and models
-download_dependencies()
+#download_dependencies()
 
 from MainApp.app import launchApp
 # launch the app

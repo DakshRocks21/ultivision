@@ -58,15 +58,23 @@ WindowManager:
         orientation: 'vertical'
         MDLabel:
             id: header
-            text: 'Welcome to Our App!'
+            text: 'Welcome to DakshVision!'
             font_style: 'H4' 
+            pos_hint: {"center_x": 0.5, "center_y": 0.65}
+            halign: 'center'
+        MDLabel:
+            id: Subtitle1
+            text: 'An app created by Daksh Thapar, Tan Xuan Han and Richard Tan :D'
+            font_style: 'H6' 
+            pos_hint: {"center_x": 0.5, "center_y": 0.6}
             halign: 'center'
         MDFlatButton:
             id: start_button
-            text: 'Start'
+            text: 'Press to Start'
             md_bg_color: app.theme_cls.primary_light
             font_style: 'Subtitle1' 
-            pos_hint: {"center_x": 0.5, "center_y": 0.1}
+            pos_hint: {"center_x": 0.5, "center_y": 0.3}
+            size_hint: 0.8, 0.4
             on_press: app.startcam()
 <SettingsScreen>:
 # Settings: Consists of 8 playable audio files (Sound Library), and settings to change Camera and toggle Quick Launch
@@ -240,7 +248,7 @@ class MainApp(MDApp):
             target=tensorflow, args=(inputQ, outputQ))
         self.tensorflowThread.start()
         self.title = "DakshVision"
-        # self.icon = "icon.png"
+        self.icon = f"{DATA_PATH}/images/icon.jpg"
         self.image = Image()
         self.get_labels()
         self.json_config = load_config()

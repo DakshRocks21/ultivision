@@ -4,6 +4,9 @@ import os
 from MainApp.utils.constants import MODEL_GARDEN_PATH
 
 def download_dependencies():
+    """
+    This function will download the dependencies and models required for the app to run.
+    """
     print("Welcome to Computing+ Group K Coursework! Code written by Daksh Thapar, Richard Tan and Tan Xuan Han")
     print("This script will now download the best performing model from Google Drive.")
     print()

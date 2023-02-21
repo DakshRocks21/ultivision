@@ -7,6 +7,9 @@ from pydrive2.auth import GoogleAuth
 from pydrive2.drive import GoogleDrive
 
 def download_model():
+    """
+    Downloads the best performing model from Google Drive
+    """
     def download_model_ckpt(model_name: str):
         
         if not os.path.exists(f"{DATA_PATH}/{model_name}"):

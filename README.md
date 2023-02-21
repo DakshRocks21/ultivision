@@ -3,6 +3,8 @@ DakshVision is a project created by Daksh Thapar, Tan Xuan Han and Richard Tan (
 
 It was made with the intent to help people with visual impairments to integrate with the world around them more conveniently. It plays audio based on the objects detected, allowing the visually impaired to understand their environments better, and move around easier.
 
+`Look for our model training code in the model_training folder`
+
 ## Group Members
 
 - Daksh Thapar (S4-01)

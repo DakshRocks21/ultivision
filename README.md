@@ -25,15 +25,6 @@ pip install -r requirements.txt #for output
 
 > :warning: You need to use a virtual environment to run this project.
 
-name your virtual environment `coursework-test` and run `source venv/bin/activate` to activate it.
+name your virtual environment `coursework-venv` and run `source coursework-venv/bin/activate` to activate it.
 
-Simulate a medium-density screen such as Motorola Droid 2: `python main.py -m screen:droid2`
-
-Simulate a high-density screen such as HTC One X, in portrait: `python main.py -m screen:onex,portrait`
-
-Simulate the iPad 2 screen: `python main.py -m screen:ipad`
-
-If the generated window is too large, you can specify a scale: `python main.py -m screen:note2,portrait,scale=.75`
-
-Get the full list of available screens: `python main.py -m screen`
-
+Simulate a medium-density screen such as Motorola Droid 2: `python3 main.py`

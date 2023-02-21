@@ -1,11 +1,9 @@
-from object_detection.utils import config_util
-from object_detection.builders import model_builder
-from object_detection.utils import visualization_utils as viz_utils
-from object_detection.utils import label_map_util
-import tensorflow as tf
-from MainApp.utils.constants import LABELMAP_FILENAME, DATA_PATH, LABELMAP_FILENAME_PATH, CASE
-from MainApp.utils.config import load_config, change_config
-from playsound import playsound
+## / KIVY IMPORTS /##
+from kivy.config import Config
+Config.set('graphics', 'width', '1200')
+Config.set('graphics', 'height', '800')
+Config.set('graphics', 'minimum_width', '800')
+Config.set('graphics', 'minimum_height', '800')
 from kivymd.uix.menu import MDDropdownMenu
 from kivymd.uix.dialog import MDDialog
 from kivymd.icon_definitions import md_icons
@@ -20,28 +18,29 @@ from kivymd.uix.button import MDFlatButton, MDRaisedButton, MDTextButton
 from kivymd.uix.label import MDLabel
 from kivymd.app import MDApp
 from kivy.uix.boxlayout import BoxLayout
-from kivy.config import Config
+
+## / TTS IMPORTS /##
+from playsound import playsound
+
+## / UTILS IMPORTS /##
+from MainApp.utils.constants import LABELMAP_FILENAME, DATA_PATH, LABELMAP_FILENAME_PATH, CASE
+from MainApp.utils.config import load_config, change_config
+
+## / TENSOFLOW IMPORTS /##
+import tensorflow as tf
+from object_detection.utils import label_map_util
+from object_detection.builders import model_builder
+from object_detection.utils import config_util
+from object_detection.utils import visualization_utils as viz_utils
+
+## / MISC IMPORTS /##
 import sys
 from queue import Queue
 import threading
 import numpy as np
 import cv2
 import warnings
-warnings.filterwarnings("ignore")
-## / MISC IMPORTS /##
-
-## / KIVY IMPORTS /##
-Config.set('graphics', 'width', '1000')
-Config.set('graphics', 'height', '1000')
-Config.set('graphics', 'minimum_width', '800')
-Config.set('graphics', 'minimum_height', '800')
-
-
-## / TTS IMPORTS /##
-
-## / UTILS IMPORTS /##
-
-## / TENSOFLOW IMPORTS /##
+warnings.simplefilter('ignore')
 
 ## / KIVY UI /##
 # $# Written by Daksh and Richard #$#
@@ -311,7 +310,7 @@ class MainApp(MDApp):
         except:
             pass
         menu_items = []
-        for i in range(10):
+        for i in range(6): # camera 0 to camera 5
             cap = cv2.VideoCapture(i)
             if cap.read()[0]:
                 menu_items.append({

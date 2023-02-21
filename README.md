@@ -11,9 +11,9 @@ It was made with the intent to help people with visual impairments to integrate 
 
 ## Requirements
 
-- 1. Install HomeBrew : `/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"`
-- 2. Install protobuf with `brew install protobuf`
-- 3. Install portaudio with `brew install portaudio` 
+1. Install HomeBrew : `/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"`
+2. Install protobuf with `brew install protobuf`
+3. Install portaudio with `brew install portaudio` 
 - Python Version : `3.10.9`
 - MacOS Version `> 12.6.0`
 - Use a Intel Mac
@@ -22,13 +22,10 @@ It was made with the intent to help people with visual impairments to integrate 
 
 > :warning: You need to use a virtual environment to run this project.
 
-- 4. Create a virtual environment called `coursework-venv`: `python3 -m venv coursework-venv`
-
-- 5. Activate the environment using: `source coursework-venv/bin/activate`
-
-- 6. Install dependencies using `pip3 install -q -r requirements.txt`
-
-- 7. Run the app using: `python3 main.py`
+4. Create a virtual environment called `coursework-venv`: `python3 -m venv coursework-venv`
+5. Activate the environment using: `source coursework-venv/bin/activate`
+6. Install dependencies using `pip3 install -q -r requirements.txt`
+7. Run the app using: `python3 main.py`
 
 ## Common Errors
 

@@ -4,3 +4,5 @@ PyDrive2
 numpy 
 pyaudio
 playsound
+PyObjC
+tensorflow-object-detection-api

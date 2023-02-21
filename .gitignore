@@ -4,7 +4,6 @@ image.png
 
 client_secrets.json
 dependencies
-coursework-test-ssdmobilenet-*
-coursework-test
+coursework-venv
 __pycache__
 .vscode

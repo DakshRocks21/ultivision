@@ -1,5 +1,6 @@
 ## / KIVY IMPORTS /##
 from kivy.config import Config
+# Setting up the window size, and its minimum.
 Config.set('graphics', 'width', '1200')
 Config.set('graphics', 'height', '800')
 Config.set('graphics', 'minimum_width', '800')
@@ -51,6 +52,7 @@ WindowManager:
     CameraScreen:
 
 <HomeScreen>:
+# Homescreen of the app. A welcome label and a button to continue.
     name: 'home'
     MDScreen:
         orientation: 'vertical'
@@ -67,6 +69,7 @@ WindowManager:
             pos_hint: {"center_x": 0.5, "center_y": 0.1}
             on_press: app.startcam()
 <SettingsScreen>:
+# Settings: Consists of 8 playable audio files (Sound Library), and settings to change Camera and toggle Quick Launch
     name: 'settings'
     MDScreen:
         orientation: 'vertical'
@@ -80,6 +83,7 @@ WindowManager:
             pos_hint: {"center_x": 0.5, "center_y": 0.90}
             font_style: 'H6'
             halign: 'center'
+        # Buttons for the 8 playable sound files
         MDFlatButton:
             text: 'Person'
             pos_hint: {"center_x": 0.30, "center_y": 0.800}
@@ -128,6 +132,7 @@ WindowManager:
             size_hint: 0.30, 0.075
             md_bg_color: app.theme_cls.primary_light
             on_press: app.playAudio('truck')
+        #Toggle for Quick Launch
         MDLabel:
             text: "Quick Launch"
             pos_hint: {"center_x": 0.7, "center_y": 0.70}
@@ -142,7 +147,7 @@ WindowManager:
             id: switch
             pos_hint: {'center_x': 0.7, 'center_y': .6}
             on_active: app.on_switch_active(*args)
-        
+        # Confidence Threshold 
         MDTextField:
             id: textfield
             hint_text: "Enter the confidence threshold"
@@ -155,7 +160,7 @@ WindowManager:
             input_filter: 'float'
             multiline: False
             on_text_validate: app.on_textfield_enter(*args)
-
+        # Camera Switcher
         MDRectangleFlatIconButton:
             id: button
             text: "Camera Switcher"
@@ -163,6 +168,7 @@ WindowManager:
             pos_hint: {"center_x": 0.7, "center_y": .4}
             size_hint: 0.30, 0.1
             on_release: app.dropdown1.open()
+        # Return to Camera
         MDFlatButton:
             id: backToCameraBtn
             text: 'Back to Camera'
@@ -182,10 +188,11 @@ WindowManager:
             halign: 'center'
             pos_hint: {"center_x": 0.5, "center_y": 0.9}
             size_hint: 0.8, 0.1
-        BoxLayout:
+        BoxLayout: # Cameraview
             id: layout
             pos_hint: {"center_x": 0.5, "center_y": 0.5}
             size_hint: 0.8, 0.8
+        # Buttons to go to Settings or Quit app
         MDFlatButton:
             text: 'Settings'
             pos_hint: {"center_x": 0.30, "center_y": 0.1}

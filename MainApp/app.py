@@ -342,7 +342,6 @@ class MainApp(MDApp):
         """
         Select the camera that was passed in
         """
-        print("Camera " + str(i) + " selected")
         self.CAMERA = int(i)
         self.dropdown1.dismiss()
 

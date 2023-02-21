@@ -63,7 +63,7 @@ WindowManager:
             pos_hint: {"center_x": 0.5, "center_y": 0.65}
             halign: 'center'
         MDLabel:
-            id: Subtitle1
+            id: subtitle
             text: 'An app created by Daksh Thapar, Tan Xuan Han and Richard Tan :D'
             font_style: 'H6' 
             pos_hint: {"center_x": 0.5, "center_y": 0.6}
@@ -377,8 +377,9 @@ class MainApp(MDApp):
         """
         self.root.current = 'home'
         self.root.get_screen('home').ids.header.text = "Loading..."
-        # hide the start button
+        # hide the start button & subtitle
         self.root.get_screen('home').ids.start_button.opacity = 0
+        self.root.get_screen('home').ids.subtitle.opacity = 0
         self.capture = cv2.VideoCapture(int(self.CAMERA))
         self.oncam = True
         self.root.get_screen('camera').ids.layout.add_widget(self.image)
@@ -399,8 +400,9 @@ class MainApp(MDApp):
             self.root.transition = SlideTransition(direction="right")
             self.root.current = 'home'
             self.root.get_screen(
-                'home').ids.header.text = "Welcome to our app!"
+                'home').ids.header.text = "Welcome to DakshVision!"
             self.root.get_screen('home').ids.start_button.opacity = 100
+            self.root.get_screen('home').ids.subtitle.opacity = 100
 
     ### VIDEO RENDERING FUNCTIONS ###
 

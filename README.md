@@ -1,5 +1,7 @@
 # Computing Coursework 2023 : Group K
-DakshVision is a project created by Daksh Thapar, Tan Xuan Han and Richard Tan (Group Leader).
+Version 1.0
+
+UltiVision is a project created by Daksh Thapar, Tan Xuan Han and Richard Tan (Group Leader).
 
 It was made with the intent to help people with visual impairments to integrate with the world around them more conveniently. It plays audio based on the objects detected, allowing the visually impaired to understand their environments better, and move around easier.
 

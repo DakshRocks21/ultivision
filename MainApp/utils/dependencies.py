@@ -28,5 +28,6 @@ def download_dependencies():
 
         os.system(f"cd {MODEL_GARDEN_PATH}/research && protoc object_detection/protos/*.proto --python_out=. && cp object_detection/packages/tf2/setup.py . && pip install -q .")
         os.system("curl https://raw.githubusercontent.com/protocolbuffers/protobuf/main/python/google/protobuf/internal/builder.py -o coursework-venv/lib/python3.10/site-packages/google/protobuf/internal/builder.py")
-    from MainApp.utils.model import download_model
-    download_model()
+    
+    #from MainApp.utils.model import download_model
+    #download_model()

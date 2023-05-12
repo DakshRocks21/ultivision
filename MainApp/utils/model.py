@@ -1,5 +1,8 @@
 #$# Written by Daksh and Xuan Han#$#
 
+### DEPRECATED ###
+### Model is now bundled with the app itself ###
+
 from MainApp.utils.constants import LABELMAP_FILENAME, PREFERRED_FILENAME, DATA_PATH, PREFERRED_FILENAME_PATH, LABELMAP_FILENAME_PATH
 from MainApp.utils.config import change_config
 import os

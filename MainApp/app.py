@@ -58,7 +58,7 @@ WindowManager:
         orientation: 'vertical'
         MDLabel:
             id: header
-            text: 'Welcome to DakshVision!'
+            text: 'Welcome to UltiVision!'
             font_style: 'H4' 
             pos_hint: {"center_x": 0.5, "center_y": 0.65}
             halign: 'center'
@@ -247,8 +247,8 @@ class MainApp(MDApp):
         self.tensorflowThread = threading.Thread(
             target=tensorflow, args=(inputQ, outputQ))
         self.tensorflowThread.start()
-        self.title = "DakshVision"
-        self.icon = f"{DATA_PATH}/images/icon.jpg"
+        self.title = "UltiVision"
+        self.icon = f"{DATA_PATH}/images/icon.png"
         self.image = Image()
         self.get_labels()
         self.json_config = load_config()
@@ -399,7 +399,7 @@ class MainApp(MDApp):
             self.root.transition = SlideTransition(direction="right")
             self.root.current = 'home'
             self.root.get_screen(
-                'home').ids.header.text = "Welcome to DakshVision!"
+                'home').ids.header.text = "Welcome to UltiVision!"
             self.root.get_screen('home').ids.start_button.opacity = 100
             self.root.get_screen('home').ids.subtitle.opacity = 100
 

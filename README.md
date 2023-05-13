@@ -1,39 +1,47 @@
-# Computing Coursework 2023 : Group K
-Version 1.0
+# About
 
-UltiVision is a project created by Daksh Thapar, Tan Xuan Han and Richard Tan (Group Leader).
+UltiVision is a revolutionary leap forward in visual navigation for the visually impaired, making the world accessible for all. Powered by advanced Machine Learning algorithms, it uses computer vision to detect everyday objects like people, doors, vehicles, and animals.
 
-It was made with the intent to help people with visual impairments to integrate with the world around them more conveniently. It plays audio based on the objects detected, allowing the visually impaired to understand their environments better, and move around easier.
+By converting this visual information, such as distance and position information, into carefully tailored sounds, UltiVision enables users to quickly and efficiently visualise their surroundings. UltiVision bridges the gap between visual and auditory perception, and represents progress towards a more inclusive society.
 
-`Look for our model training code in the model_training folder`
+# Screenshots
 
-## Group Members
+<p>
+    <img src="screenshots/screenshot_1.png" width=300/>
+    <img src="screenshots/screenshot_2.png" width=300/>
+    <img src="screenshots/screenshot_3.png" width=300/>
+</p>
 
-- Daksh Thapar (S4-01)
-- Richard Tan (S4-07)
-- Tan Xuan Han (S4-08)
-
-## Requirements
+# Requirements
 
 1. Install HomeBrew : `/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"`
 2. Install protobuf with `brew install protobuf`
-3. Install portaudio with `brew install portaudio` 
+3. Install portaudio with `brew install portaudio`
 - Python Version : `3.10.9`
-- MacOS Version `> 12.6.0`
-- Use a Intel Mac
+- macOS Version `> 12.6.0` (Tested on macOS but may work on other platforms too)
+- Use a x64 computer!
 
-## Usage
+# Usage
 
 > :warning: You need to use a virtual environment to run this project.
 
-4. Create a virtual environment called `coursework-venv`: `python3 -m venv coursework-venv`
-5. Activate the environment using: `source coursework-venv/bin/activate`
-6. Install dependencies using `pip3 install -q -r requirements.txt`
-7. Run the app using: `python3 main.py`
+1. Create a virtual environment called `coursework-venv`: `python3 -m venv coursework-venv`
 
-## Common Errors
+2. Activate the environment using: `source coursework-venv/bin/activate`
 
-`These are errors that you may encounter and we can do nothing about them.`
-- If your pip3 has a network error, try running it with a proxy. We tested it with a China proxy and it worked. 
+3. Install dependencies using `pip3 install -q -r requirements.txt`
+
+4. Run the app using: `python3 main.py`
+
+# Troubleshooting
+
 - If you get an error saying `portaudio.h` not found, try running `brew install portaudio` and then run the app again.
 - If you get an error saying `libportaudio.2.dylib` not found or something simliar, try running `brew install portaudio` and then run the app again.
+
+# Additional information
+
+The model training code can be found in the `model_training` folder.
+
+# Credits
+
+UltiVision was created by Tan Yu Zhe Richard (leader), Tan Xuan Han and Daksh Thapar and used for the 2022-2023 SST Computing+ Coursework.
